@@ -1,12 +1,26 @@
+// Copyright Ⓒ 2023 Pavlo Moisieienko. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
+// Package collections contains some thread safe collections.
 package collections
 
 import "sync"
 
+// ConcurrentMap is a thread safe map.
+// A ConcurrentMap is safe for concurrent use by multiple goroutines.
+//   - K - comparable key type;
+//   - V - value type.
 type ConcurrentMap[K comparable, V any] struct {
 	sync.RWMutex
 	mp map[K]V
 }
 
+// PutIfNotExists maps the specified key (key) to the specified value (value)
+// if the key doesn't exist returns true and a new value (value).
+// If the key exists, the new value will not be mapped to it, the method returns false and the previous key (key) value.
+//   - key - the key with which a specified value is to be assigned
+//   - value - the value to be associated with the specified key
 func (cmap *ConcurrentMap[K, V]) PutIfNotExists(key K, value V) (bool, V) {
 	cmap.Lock()
 	defer cmap.Unlock()
@@ -17,6 +31,11 @@ func (cmap *ConcurrentMap[K, V]) PutIfNotExists(key K, value V) (bool, V) {
 	cmap.mp[key] = value
 	return true, value
 }
+
+// PutIfNotExistsDoubleCheck does the same thing as PutIfNotExists, but before doing so,
+// it checks the existence of the key (key) using the Get method.
+//   - key - the key with which a specified value is to be assigned
+//   - value - the value to be associated with the specified key
 func (cmap *ConcurrentMap[K, V]) PutIfNotExistsDoubleCheck(key K, value V) (bool, V) {
 	old, ok := cmap.Get(key)
 	if ok {
@@ -25,42 +44,68 @@ func (cmap *ConcurrentMap[K, V]) PutIfNotExistsDoubleCheck(key K, value V) (bool
 	return cmap.PutIfNotExists(key, value)
 }
 
-func (cmap *ConcurrentMap[K, V]) RemoveIfExists(key K) (bool, V) {
+// RemoveIfExistsDoubleCheck removes the key and its corresponding value,
+// before this method checks the existence of the key using the Get method.
+//   - key - the key that needs to be removed
+func (cmap *ConcurrentMap[K, V]) RemoveIfExistsDoubleCheck(key K) (bool, V) {
 	old, ok := cmap.Get(key)
 	if !ok {
 		return false, old
 	}
+	return cmap.RemoveIfExists(key)
+}
+
+// RemoveIfExists removes the key and its corresponding value.
+// If the key exists, the method returns true and the value corresponding to that key,
+// otherwise it returns false and the default value for the value type.
+//   - key - the key that needs to be removed
+func (cmap *ConcurrentMap[K, V]) RemoveIfExists(key K) (bool, V) {
 	cmap.Lock()
 	defer cmap.Unlock()
-	old, ok = cmap.mp[key]
+	old, ok := cmap.mp[key]
 	if !ok {
 		return false, old
 	}
 	delete(cmap.mp, key)
 	return true, old
 }
+
+// Remove removes the key and its corresponding value from the ConcurrentMap.
+//   - key - the key that needs to be removed
 func (cmap *ConcurrentMap[K, V]) Remove(key K) {
 	cmap.Lock()
 	delete(cmap.mp, key)
 	cmap.Unlock()
 }
+
+// Put maps the specified key (key) to the specified value (value).
+// The value can be retrieved by calling the Get method with a key that is equal to the original key.
+//   - key - the key with which a specified value is to be assigned
+//   - value - the value to be associated with the specified key
 func (cmap *ConcurrentMap[K, V]) Put(key K, value V) {
 	cmap.Lock()
 	cmap.mp[key] = value
 	cmap.Unlock()
 }
+
+// Get returns the value to which the specified key is mapped and the sign of existence of this value.
+// If a value for the key exists, its value is returned and true,
+// otherwise the default value for the value type is returned and false.
 func (cmap *ConcurrentMap[K, V]) Get(key K) (V, bool) {
 	cmap.RLock()
 	val, ok := cmap.mp[key]
 	cmap.RUnlock()
 	return val, ok
 }
+
+// Size returns the number of key-value mappings in this map.
 func (cmap *ConcurrentMap[K, V]) Size() int {
 	cmap.RLock()
 	defer cmap.RUnlock()
 	return len(cmap.mp)
 }
 
+// Copy returns a shallow copy of this ConcurrentMap instance: the keys and the values themselves are not copies.
 func (cmap *ConcurrentMap[K, V]) Copy() map[K]V {
 	cmap.RLock()
 	result := make(map[K]V, len(cmap.mp))
@@ -71,9 +116,17 @@ func (cmap *ConcurrentMap[K, V]) Copy() map[K]V {
 	return result
 }
 
+// NewConcurrentMap creates and returns a new empty ConcurrentMap instance.
+//   - K - comparable key type;
+//   - V - value type.
 func NewConcurrentMap[K comparable, V any]() *ConcurrentMap[K, V] {
 	return &ConcurrentMap[K, V]{mp: make(map[K]V)}
 }
+
+// NewConcurrentMapCapacity creates and returns a new empty ConcurrentMap with an initial space size (capacity).
+//   - K - comparable key type;
+//   - V - value type;
+//   - capacity - initial space size.
 func NewConcurrentMapCapacity[K comparable, V any](capacity int) *ConcurrentMap[K, V] {
 	return &ConcurrentMap[K, V]{mp: make(map[K]V, capacity)}
 }

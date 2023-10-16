@@ -36,6 +36,26 @@ func TestConcurrentMap_PutIfNotExists(t *testing.T) {
 	}
 }
 
+func TestConcurrentMap_RemoveIfExistsDoubleCheck(t *testing.T) {
+	cm := NewConcurrentMap[string, int]()
+	key, val := "key string", 123
+	cm.Put(key, val)
+	if _, ok := cm.Get(key); !ok {
+		t.Fatalf("value %v was not added for key %v", val, key)
+	}
+	ok, actual := cm.RemoveIfExistsDoubleCheck(key)
+	if !ok {
+		t.Fatalf("value not exists for key %v", key)
+	}
+	if actual != val {
+		t.Fatalf("wrong value, expected: %v, actual: %v", val, actual)
+	}
+	ok1, actual1 := cm.RemoveIfExistsDoubleCheck(key)
+	if ok1 {
+		t.Fatalf("the value (%v) for the key (%v) suddenly exists", actual1, key)
+	}
+}
+
 func TestConcurrentMap_RemoveIfExists(t *testing.T) {
 	cm := NewConcurrentMap[string, int]()
 	key, val := "key string", 123
