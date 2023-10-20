@@ -9,6 +9,24 @@ import (
 	"testing"
 )
 
+func TestConcurrentMap_ForEachRead(t *testing.T) {
+	cm := NewConcurrentMap[int, int]()
+	cm.Put(1, 2)
+	cm.Put(3, 5)
+	cm.Put(7, 9)
+	sumK, sumV := 0, 0
+	cm.ForEachRead(func(key int, value int) {
+		sumK += key
+		sumV += value
+	})
+	if sumK != 11 {
+		t.Fatal("ForEachRead() incorrect sum of keys", "expected:", 11, "actual:", sumK)
+	}
+	if sumV != 16 {
+		t.Fatal("ForEachRead() incorrect sum of values", "expected:", 16, "actual:", sumV)
+	}
+}
+
 func TestConcurrentMap_ForEach(t *testing.T) {
 	type tstType struct {
 		name  string
