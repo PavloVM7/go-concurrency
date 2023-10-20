@@ -17,6 +17,15 @@ type ConcurrentMap[K comparable, V any] struct {
 	capacity int
 }
 
+// ForEach performs a given action for each (key, value)
+func (cmap *ConcurrentMap[K, V]) ForEach(fnc func(key K, value V)) {
+	cmap.Lock()
+	for k, v := range cmap.mp {
+		fnc(k, v)
+	}
+	cmap.Unlock()
+}
+
 // PutIfNotExists maps the specified key (key) to the specified value (value)
 // if the key doesn't exist returns true and a new value (value).
 // If the key exists, the new value will not be mapped to it, the method returns false and the previous key (key) value.

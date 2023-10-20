@@ -5,8 +5,43 @@
 package collections
 
 import (
+	"reflect"
 	"testing"
 )
+
+func TestConcurrentMap_ForEach(t *testing.T) {
+	type tstType struct {
+		name  string
+		value int
+	}
+	cm := NewConcurrentMap[int, *tstType]()
+	cm.Put(2, &tstType{"tst 2", 2})
+	cm.Put(3, &tstType{"tst 3", 3})
+	cm.Put(5, &tstType{"tst 5", 5})
+	sum := 0
+	cm.ForEach(func(key int, value *tstType) {
+		sum += key
+		value.value *= 2
+	})
+	if sum != 10 {
+		t.Fatal("incorrect sum", "expected:", 10, "actual:", sum)
+	}
+	expected2 := &tstType{"tst 2", 4}
+	actual2, _ := cm.Get(2)
+	if !reflect.DeepEqual(actual2, expected2) {
+		t.Log("expected:", expected2, "actual:", actual2)
+	}
+	expected3 := &tstType{"tst 3", 6}
+	actual3, _ := cm.Get(3)
+	if !reflect.DeepEqual(actual3, expected3) {
+		t.Log("expected:", expected3, "actual:", actual3)
+	}
+	expected5 := &tstType{"tst 5", 10}
+	actual5, _ := cm.Get(5)
+	if !reflect.DeepEqual(actual5, expected5) {
+		t.Log("expected:", expected5, "actual:", actual5)
+	}
+}
 
 func TestConcurrentMap_PutIfNotExistsDoubleCheck(t *testing.T) {
 	cm := NewConcurrentMap[string, int]()
