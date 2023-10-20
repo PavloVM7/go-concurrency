@@ -164,6 +164,39 @@ func TestConcurrentMap_Copy(t *testing.T) {
 	}
 }
 
+func TestConcurrentMap_Clear(t *testing.T) {
+	cm := NewConcurrentMap[int, int]()
+	if cm.capacity != 0 {
+		t.Fatal("wrong capacity")
+	}
+	cm.Put(1, 1)
+	cm.Put(2, 2)
+	cm.Put(3, 3)
+	if cm.Size() != 3 {
+		t.Fatal("wrong map size")
+	}
+	cm.Clear()
+	if cm.Size() != 0 {
+		t.Fatal("the map is not cleared")
+	}
+}
+func TestConcurrentMap_Clear_capacity(t *testing.T) {
+	cm := NewConcurrentMapCapacity[int, string](123)
+	if cm.capacity != 123 {
+		t.Fatal("wrong capacity")
+	}
+	cm.Put(1, "str")
+	cm.Put(2, "str")
+	cm.Put(3, "str")
+	if cm.Size() != 3 {
+		t.Fatal("wrong map size")
+	}
+	cm.Clear()
+	if cm.Size() != 0 {
+		t.Fatal("the map is not cleared")
+	}
+}
+
 func TestConcurrentMap_Size(t *testing.T) {
 	cm := NewConcurrentMapCapacity[int, string](123)
 	if cm.Size() != 0 {

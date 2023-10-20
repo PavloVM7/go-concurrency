@@ -13,7 +13,8 @@ import "sync"
 //   - V - value type.
 type ConcurrentMap[K comparable, V any] struct {
 	sync.RWMutex
-	mp map[K]V
+	mp       map[K]V
+	capacity int
 }
 
 // PutIfNotExists maps the specified key (key) to the specified value (value)
@@ -116,6 +117,17 @@ func (cmap *ConcurrentMap[K, V]) Copy() map[K]V {
 	return result
 }
 
+// Clear clears the map
+func (cmap *ConcurrentMap[K, V]) Clear() {
+	cmap.Lock()
+	if cmap.capacity > 0 {
+		cmap.mp = make(map[K]V, cmap.capacity)
+	} else {
+		cmap.mp = make(map[K]V)
+	}
+	cmap.Unlock()
+}
+
 // NewConcurrentMap creates and returns a new empty ConcurrentMap instance.
 //   - K - comparable key type;
 //   - V - value type.
@@ -128,5 +140,5 @@ func NewConcurrentMap[K comparable, V any]() *ConcurrentMap[K, V] {
 //   - V - value type;
 //   - capacity - initial space size.
 func NewConcurrentMapCapacity[K comparable, V any](capacity int) *ConcurrentMap[K, V] {
-	return &ConcurrentMap[K, V]{mp: make(map[K]V, capacity)}
+	return &ConcurrentMap[K, V]{mp: make(map[K]V, capacity), capacity: capacity}
 }
