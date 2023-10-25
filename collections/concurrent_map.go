@@ -118,6 +118,8 @@ func (cmap *ConcurrentMap[K, V]) Put(key K, value V) {
 }
 
 // Get returns the value to which the specified key is mapped and the sign of existence of this value.
+//   - key - the key whose value will be returned
+//
 // If a value for the key exists, its value is returned and true,
 // otherwise the default value for the value type is returned and false.
 func (cmap *ConcurrentMap[K, V]) Get(key K) (V, bool) {
