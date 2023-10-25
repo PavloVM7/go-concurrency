@@ -6,7 +6,10 @@ package collections
 
 import (
 	"reflect"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 )
 
 func TestConcurrentMap_ForEachRead(t *testing.T) {
@@ -268,4 +271,64 @@ func TestConcurrentMap_Size(t *testing.T) {
 	if cm.Size() != 0 {
 		t.Fatalf("wrong size: expected %d, actual: %d", 0, cm.Size())
 	}
+}
+
+func TestNewConcurrentMap(t *testing.T) {
+	cm := NewConcurrentMap[int, int]()
+	threads := 100
+	count := 100_000
+	counters := make([]int32, threads)
+	var state int32
+	var wg sync.WaitGroup
+	fnc := func(num int) {
+		for atomic.LoadInt32(&state) == 0 {
+		}
+		for i := 0; i < count; i++ {
+			if ok, _ := cm.PutIfNotExistsDoubleCheck(i, num); ok {
+				atomic.AddInt32(&counters[num], 1)
+			}
+		}
+		wg.Done()
+	}
+	for i := 0; i < threads; i++ {
+		wg.Add(1)
+		go fnc(i)
+	}
+	wg.Add(1)
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		n := 0
+		for range ticker.C {
+			n++
+			t.Log("ticker:", n, "tick:")
+			if n >= 3 {
+				break
+			}
+		}
+		ticker.Stop()
+		wg.Done()
+	}()
+	atomic.StoreInt32(&state, 1)
+	wg.Wait()
+	size := cm.Size()
+	if size != count {
+		t.Errorf("wrong map size: %d, expected: %d", size, count)
+	}
+	amounts := make([]int, threads)
+	cm.ForEachRead(func(key int, value int) {
+		amounts[value]++
+	})
+	var sum int32
+	amount := 0
+	for i, c := range counters {
+		if c > 0 {
+			sum += c
+			amount++
+		}
+		t.Log(i, "=", c, "=", amounts[i])
+	}
+	if sum != int32(count) {
+		t.Fatalf("wrong count: %d, expected: %d", sum, count)
+	}
+	t.Log("size:", size, "sum:", sum, "amount:", amount)
 }
