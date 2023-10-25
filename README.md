@@ -1,3 +1,4 @@
+[![Go](https://github.com/PavloVM7/go-concurrency/actions/workflows/go.yml/badge.svg)](https://github.com/PavloVM7/go-concurrency/actions/workflows/go.yml)
 # go-concurrency
 
 This module contains some thread safe entities and collections
