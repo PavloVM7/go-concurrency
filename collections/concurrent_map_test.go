@@ -9,7 +9,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
-	"time"
 )
 
 func TestConcurrentMap_ForEachRead(t *testing.T) {
@@ -294,20 +293,6 @@ func TestNewConcurrentMap(t *testing.T) {
 		wg.Add(1)
 		go fnc(i)
 	}
-	wg.Add(1)
-	go func() {
-		ticker := time.NewTicker(1 * time.Second)
-		n := 0
-		for range ticker.C {
-			n++
-			t.Log("ticker:", n, "tick:")
-			if n >= 3 {
-				break
-			}
-		}
-		ticker.Stop()
-		wg.Done()
-	}()
 	atomic.StoreInt32(&state, 1)
 	wg.Wait()
 	size := cm.Size()
