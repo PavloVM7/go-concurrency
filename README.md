@@ -40,5 +40,5 @@ go func() {
     }
 }()
 ```
-## Author
-[@PavloPM7](https://github.com/PavloVM7) - Idea & Initial work
+## ⌨️ Author
+[@PavloVM7](https://github.com/PavloVM7) - Idea & Initial work
