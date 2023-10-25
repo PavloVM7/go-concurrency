@@ -18,23 +18,29 @@ type ConcurrentMap[K comparable, V any] struct {
 }
 
 // ForEachRead performs a given action for each (key, value)
-// Note!
+//   - f - the function, that will be called for each (key, value) pair in ConcurrentMap
+//
 // It should not be used to modify values if the value type (V) is a reference type,
 // because a read lock is used under the hood.
-func (cmap *ConcurrentMap[K, V]) ForEachRead(fnc func(key K, value V)) {
+// Note! ConcurrentMap methods, such as Get and Size can be used inside the 'f' function.
+// However, you should not use methods that modify ConcurrentMap, as this will cause a deadlock.
+func (cmap *ConcurrentMap[K, V]) ForEachRead(f func(key K, value V)) {
 	cmap.RLock()
 	for k, v := range cmap.mp {
-		fnc(k, v)
+		f(k, v)
 	}
 	cmap.RUnlock()
 }
 
 // ForEach performs a given action for each (key, value)
+//   - f - the function, that will be called for each (key, value) pair in ConcurrentMap
+//
 // If the value type (V) is a reference type, this method can be used to modify values
-func (cmap *ConcurrentMap[K, V]) ForEach(fnc func(key K, value V)) {
+// Note! Do NOT USE ConcurrentMap methods inside the 'f' function, as this will cause a deadlock.
+func (cmap *ConcurrentMap[K, V]) ForEach(f func(key K, value V)) {
 	cmap.Lock()
 	for k, v := range cmap.mp {
-		fnc(k, v)
+		f(k, v)
 	}
 	cmap.Unlock()
 }

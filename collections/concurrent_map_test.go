@@ -11,19 +11,28 @@ import (
 
 func TestConcurrentMap_ForEachRead(t *testing.T) {
 	cm := NewConcurrentMap[int, int]()
-	cm.Put(1, 2)
+	cm.Put(1, 3)
 	cm.Put(3, 5)
-	cm.Put(7, 9)
-	sumK, sumV := 0, 0
+	cm.Put(5, 7)
+	sumK, sumV, sumSize, sumVget := 0, 0, 0, 0
 	cm.ForEachRead(func(key int, value int) {
 		sumK += key
 		sumV += value
+		sumSize += cm.Size()
+		v, _ := cm.Get(value)
+		sumVget += v
 	})
-	if sumK != 11 {
+	if sumK != 9 {
 		t.Fatal("ForEachRead() incorrect sum of keys", "expected:", 11, "actual:", sumK)
 	}
-	if sumV != 16 {
+	if sumV != 15 {
 		t.Fatal("ForEachRead() incorrect sum of values", "expected:", 16, "actual:", sumV)
+	}
+	if sumSize != 9 {
+		t.Fatal("ForEachRead() incorrect sum of size", "expected:", 9, "actual:", sumSize)
+	}
+	if sumVget != 12 {
+		t.Fatal("ForEachRead() incorrect sum of values", "expected:", 16, "actual:", sumVget)
 	}
 }
 
