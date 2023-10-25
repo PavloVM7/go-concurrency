@@ -85,9 +85,11 @@ func BenchmarkConcurrentMap_Put(b *testing.B) {
 				cm.Clear()
 				b.StartTimer()
 				putFunc(bm.threads, bm.count, bm.fnc)
+				b.StopTimer()
 				if cm.Size() != bm.count {
 					b.Fatal("wrong map size", "expected:", bm.count, "actual:", cm.Size())
 				}
+				b.StartTimer()
 			}
 		})
 	}

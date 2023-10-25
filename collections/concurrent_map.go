@@ -18,8 +18,9 @@ type ConcurrentMap[K comparable, V any] struct {
 }
 
 // ForEachRead performs a given action for each (key, value)
-// Note! It should not be used to modify values if the value type (V) is a reference type,
-// because a read lock is used under the hood
+// Note!
+// It should not be used to modify values if the value type (V) is a reference type,
+// because a read lock is used under the hood.
 func (cmap *ConcurrentMap[K, V]) ForEachRead(fnc func(key K, value V)) {
 	cmap.RLock()
 	for k, v := range cmap.mp {
