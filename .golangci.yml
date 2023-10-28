@@ -1,0 +1,6 @@
+run:
+  enable-all: true
+  linters-settings:
+    ireturn:
+      allow:
+        - V

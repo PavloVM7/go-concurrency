@@ -74,7 +74,7 @@ func TestConcurrentMap_ForEach(t *testing.T) {
 
 func TestConcurrentMap_PutIfNotExistsDoubleCheck(t *testing.T) {
 	cm := NewConcurrentMap[string, int]()
-	key, val := "string key", 357
+	key, val := "string strong key", 357
 	if ok, _ := cm.PutIfNotExistsDoubleCheck(key, val); !ok {
 		t.Fatalf("PutIfNotExistsDoubleCheck(), the value (%v) was not added for the key (%v)", val, key)
 	}
@@ -278,7 +278,7 @@ func TestNewConcurrentMap(t *testing.T) {
 	count := 100_000
 	counters := make([]int32, threads)
 	var state int32
-	var wg sync.WaitGroup
+	wg := sync.WaitGroup{}
 	fnc := func(num int) {
 		for atomic.LoadInt32(&state) == 0 {
 		}

@@ -53,8 +53,7 @@ func (cmap *ConcurrentMap[K, V]) ForEach(f func(key K, value V)) {
 func (cmap *ConcurrentMap[K, V]) PutIfNotExists(key K, value V) (bool, V) {
 	cmap.Lock()
 	defer cmap.Unlock()
-	old, ok := cmap.mp[key]
-	if ok {
+	if old, ok := cmap.mp[key]; ok {
 		return false, old
 	}
 	cmap.mp[key] = value

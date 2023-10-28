@@ -59,7 +59,7 @@ func BenchmarkConcurrentMap_Put(b *testing.B) {
 	}
 	putFunc := func(threads int, count int, fnc func(k int, v int) (bool, int)) {
 		var run int32
-		putF := func(num int) {
+		putF := func() {
 			for atomic.LoadInt32(&run) == 0 {
 			}
 			for i := 0; i < count; i++ {
@@ -69,25 +69,26 @@ func BenchmarkConcurrentMap_Put(b *testing.B) {
 		var wg sync.WaitGroup
 		for i := 0; i < threads; i++ {
 			wg.Add(1)
-			go func(num int) {
+			go func() {
 				defer wg.Done()
-				putF(num)
-			}(i)
+				putF()
+			}()
 		}
 		atomic.StoreInt32(&run, 1)
 		wg.Wait()
 	}
 	for _, bm := range benchmarks {
+		bmv := bm
 		b.Run(fmt.Sprintf("cnt%d th%d %s", bm.count, bm.threads, bm.name), func(b *testing.B) {
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				b.StopTimer()
 				cm.Clear()
 				b.StartTimer()
-				putFunc(bm.threads, bm.count, bm.fnc)
+				putFunc(bmv.threads, bmv.count, bmv.fnc)
 				b.StopTimer()
-				if cm.Size() != bm.count {
-					b.Fatal("wrong map size", "expected:", bm.count, "actual:", cm.Size())
+				if cm.Size() != bmv.count {
+					b.Fatal("wrong map size", "expected:", bmv.count, "actual:", cm.Size())
 				}
 				b.StartTimer()
 			}
