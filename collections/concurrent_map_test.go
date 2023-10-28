@@ -24,17 +24,21 @@ func TestConcurrentMap_ForEachRead(t *testing.T) {
 		v, _ := cm.Get(value)
 		sumVget += v
 	})
-	if sumK != 9 {
-		t.Fatal("ForEachRead() incorrect sum of keys", "expected:", 11, "actual:", sumK)
+	const expectedSumK = 9
+	if sumK != expectedSumK {
+		t.Fatal("ForEachRead() incorrect sum of keys", "expected:", expectedSumK, "actual:", sumK)
 	}
-	if sumV != 15 {
-		t.Fatal("ForEachRead() incorrect sum of values", "expected:", 16, "actual:", sumV)
+	const expectedSumValues = 15
+	if sumV != expectedSumValues {
+		t.Fatal("ForEachRead() incorrect sum of values", "expected:", expectedSumValues, "actual:", sumV)
 	}
-	if sumSize != 9 {
-		t.Fatal("ForEachRead() incorrect sum of size", "expected:", 9, "actual:", sumSize)
+	const expectedSumSizes = 9
+	if sumSize != expectedSumSizes {
+		t.Fatal("ForEachRead() incorrect sum of size", "expected:", expectedSumSizes, "actual:", sumSize)
 	}
-	if sumVget != 12 {
-		t.Fatal("ForEachRead() incorrect sum of values", "expected:", 16, "actual:", sumVget)
+	const wantSumValsObtInsdFunc = 12
+	if sumVget != wantSumValsObtInsdFunc {
+		t.Fatal("ForEachRead() incorrect sum of values", "expected:", wantSumValsObtInsdFunc, "actual:", sumVget)
 	}
 }
 
@@ -52,8 +56,9 @@ func TestConcurrentMap_ForEach(t *testing.T) {
 		sum += key
 		value.value *= 2
 	})
-	if sum != 10 {
-		t.Fatal("incorrect sum", "expected:", 10, "actual:", sum)
+	const expectedSum = 10
+	if sum != expectedSum {
+		t.Fatal("incorrect sum", "expected:", expectedSum, "actual:", sum)
 	}
 	expected2 := &tstType{"tst 2", 4}
 	actual2, _ := cm.Get(2)
@@ -266,22 +271,42 @@ func TestConcurrentMap_Clear_capacity(t *testing.T) {
 }
 
 func TestConcurrentMap_Size(t *testing.T) {
-	cm := NewConcurrentMapCapacity[int, string](123)
+	const capacity = 123
+	cm := NewConcurrentMapCapacity[int, string](capacity)
 	if cm.Size() != 0 {
 		t.Fatalf("wrong size: expected %d, actual: %d", 0, cm.Size())
+	}
+	if cm.capacity != capacity {
+		t.Fatalf("invalid capacity: %d, want: %d", cm.capacity, cm.capacity)
+	}
+}
+
+func TestConcurrentMap_IsEmpty(t *testing.T) {
+	const capacity = 123
+	cm := NewConcurrentMapCapacity[int, string](capacity)
+	if cm.Size() != 0 {
+		t.Fatalf("wrong size: expected %d, actual: %d", 0, cm.Size())
+	}
+	if !cm.IsEmpty() {
+		t.Fatal("expected empty map")
 	}
 }
 
 func TestNewConcurrentMap(t *testing.T) {
+	const (
+		threads = 100
+		count   = 100_000
+	)
+
 	cm := NewConcurrentMap[int, int]()
-	threads := 100
-	count := 100_000
 	counters := make([]int32, threads)
 	var state int32
-	wg := sync.WaitGroup{}
+	var wg sync.WaitGroup
 	fnc := func(num int) {
+		//revive:disable:empty-block
 		for atomic.LoadInt32(&state) == 0 {
-		}
+			// waiting for a start
+		} //revive:enable:empty-block
 		for i := 0; i < count; i++ {
 			if ok, _ := cm.PutIfNotExistsDoubleCheck(i, num); ok {
 				atomic.AddInt32(&counters[num], 1)

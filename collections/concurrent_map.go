@@ -135,6 +135,11 @@ func (cmap *ConcurrentMap[K, V]) Size() int {
 	return len(cmap.mp)
 }
 
+// IsEmpty returns true if the ConcurrentMap does not contain any (key, value) pairs
+func (cmap *ConcurrentMap[K, V]) IsEmpty() bool {
+	return cmap.Size() == 0
+}
+
 // Copy returns a shallow copy of this ConcurrentMap instance: the keys and the values themselves are not copies.
 func (cmap *ConcurrentMap[K, V]) Copy() map[K]V {
 	cmap.RLock()
