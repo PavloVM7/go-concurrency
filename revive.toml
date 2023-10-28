@@ -1,0 +1,3 @@
+enableAllRules = true
+[rule.line-length-limit]
+arguments = [120]

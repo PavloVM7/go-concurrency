@@ -60,8 +60,11 @@ func BenchmarkConcurrentMap_Put(b *testing.B) {
 	putFunc := func(threads int, count int, fnc func(k int, v int) (bool, int)) {
 		var run int32
 		putF := func() {
+			//revive:disable:empty-block
 			for atomic.LoadInt32(&run) == 0 {
+				// waiting for a start
 			}
+			//revive:enable:empty-block
 			for i := 0; i < count; i++ {
 				fnc(i, i)
 			}
