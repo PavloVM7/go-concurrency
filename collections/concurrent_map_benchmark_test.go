@@ -13,7 +13,7 @@ import (
 
 func BenchmarkConcurrentMap_Put(b *testing.B) {
 	cm := NewConcurrentMap[int, int]()
-	count := 100_000
+	const count = 100_000
 	benchmarks := []struct {
 		name    string
 		threads int
