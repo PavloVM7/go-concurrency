@@ -237,6 +237,42 @@ func TestConcurrentMap_Copy(t *testing.T) {
 	}
 }
 
+func TestConcurrentMap_Keys(t *testing.T) {
+	tests := []struct {
+		key string
+		val int
+	}{
+		{"string1", 1},
+		{"string2", 2},
+		{"string3", 3},
+	}
+	cm := NewConcurrentMapCapacity[string, int](3)
+
+	for _, tt := range tests {
+		cm.Put(tt.key, tt.val)
+	}
+	if cm.IsEmpty() {
+		t.Fatal("map is empty")
+	}
+	keys := cm.Keys()
+	if len(keys) != cm.Size() {
+		t.Fatalf("wrong key slice length: %d, expected: %d", len(keys), cm.Size())
+	}
+	contains := func(key string) bool {
+		for _, k := range keys {
+			if k == key {
+				return true
+			}
+		}
+		return false
+	}
+	for _, tt := range tests {
+		if !contains(tt.key) {
+			t.Fatalf("slice not contains key '%s'", tt.key)
+		}
+	}
+}
+
 func TestConcurrentMap_Clear(t *testing.T) {
 	cm := NewConcurrentMap[int, int]()
 	if cm.capacity != 0 {

@@ -128,6 +128,17 @@ func (cmap *ConcurrentMap[K, V]) Get(key K) (V, bool) {
 	return val, ok
 }
 
+// Keys returns a slice of the keys contained in this map
+func (cmap *ConcurrentMap[K, V]) Keys() []K {
+	cmap.RLock()
+	result := make([]K, 0, len(cmap.mp))
+	for k := range cmap.mp {
+		result = append(result, k)
+	}
+	cmap.RUnlock()
+	return result
+}
+
 // Size returns the number of key-value mappings in this map.
 func (cmap *ConcurrentMap[K, V]) Size() int {
 	cmap.RLock()
