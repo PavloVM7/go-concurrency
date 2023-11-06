@@ -9,6 +9,10 @@ This module contains some thread safe entities and collections
 
 ### How to use
 
+```
+go get -u github.com/PavloVM7/go-concurrency
+```
+
 ``` go
 cm := NewConcurrentMap[int, int]() // or NewConcurrentMapCapacity[int, int](128) with initial capacity 128
 
