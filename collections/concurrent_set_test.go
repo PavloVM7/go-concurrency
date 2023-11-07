@@ -1,6 +1,23 @@
 package collections
 
-import "testing"
+import (
+	"reflect"
+	"slices"
+	"testing"
+)
+
+func TestConcurrentSet_ToSlice(t *testing.T) {
+	tests := []int{1, 2, 3}
+	set := NewConcurrentSetCapacity[int](len(tests))
+	for _, tt := range tests {
+		set.Add(tt)
+	}
+	actual := set.ToSlice()
+	slices.Sort(actual)
+	if !reflect.DeepEqual(tests, actual) {
+		t.Fatalf("wrong slice: '%v', expected: '%v'", actual, tests)
+	}
+}
 
 func TestConcurrentSet_Contains(t *testing.T) {
 	tests := []int{1, 2, 3}
