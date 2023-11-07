@@ -19,6 +19,8 @@ func (cset *ConcurrentSet[T]) Add(value T) bool {
 	}
 	return false
 }
+
+// Contains returns true if the set contains the value
 func (cset *ConcurrentSet[T]) Contains(value T) bool {
 	cset.RLock()
 	_, res := cset.mp[value]
