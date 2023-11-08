@@ -1,9 +1,12 @@
 package collections
 
 import (
+	"fmt"
 	"reflect"
 	"slices"
+	"sync"
 	"testing"
+	"time"
 )
 
 func TestConcurrentSet_ForeEach(t *testing.T) {
@@ -157,5 +160,51 @@ func TestNewConcurrentSetWithValues(t *testing.T) {
 		if !set.Contains(str) {
 			t.Fatalf("TestNewConcurrentSetWithValues(), set created incorrectly, value: '%s' is missing", str)
 		}
+	}
+}
+
+func TestConcurrentSet(t *testing.T) {
+	const (
+		count   = 100_000
+		threads = 100
+	)
+	adds := make([]int, threads)
+	set := NewConcurrentSetCapacity[int](count)
+	chStart := make(chan struct{})
+	chEnd := make(chan struct{})
+	var wg sync.WaitGroup
+	for i := 0; i < threads; i++ {
+		wg.Add(1)
+		go func(num int) {
+			<-chStart
+			for j := 1; j <= count; j++ {
+				if !set.Contains(j) && set.Add(j) {
+					adds[num]++
+				}
+			}
+			<-chEnd
+			wg.Done()
+		}(i)
+	}
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+	go func() {
+		for range ticker.C {
+			if set.Contains(count) {
+				close(chEnd)
+				return
+			}
+		}
+	}()
+	close(chStart)
+	wg.Wait()
+	sum := 0
+	for _, v := range adds {
+		sum += v
+	}
+	fmt.Println("sum=", sum)
+	t.Log("sum=", sum, adds)
+	if sum != count {
+		t.Fatalf("wrong sum: %d, want: %d", sum, count)
 	}
 }

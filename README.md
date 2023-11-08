@@ -35,6 +35,7 @@ go func() {
 }()
 
 ticker := time.NewTicker(1 * time.Second)
+defer ticker.Stop()
 go func() {
     for range ticker.C {
         if cm.Size() > 100_000 {
@@ -53,9 +54,48 @@ go func() {
 
 ### How to use
 
-``` go
-const maxValue = 10_000
-set := NewConcurrentSetCapacity[int](maxValue)
+```go
+func main() {
+	const (
+		count   = 100_000
+		threads = 100
+	)
+	adds := make([]int, threads)
+	set := NewConcurrentSetCapacity[int](count)
+	chStart := make(chan struct{})
+	chEnd := make(chan struct{})
+	var wg sync.WaitGroup
+	for i := 0; i < threads; i++ {
+		wg.Add(1)
+		go func(num int) {
+			<-chStart
+			for j := 1; j <= count; j++ {
+				if !set.Contains(j) && set.Add(j) {
+					adds[num]++
+				}
+			}
+			<-chEnd
+			wg.Done()
+		}(i)
+	}
+	ticker := time.NewTicker(100 * time.Millisecond)
+	defer ticker.Stop()
+	go func() {
+		for range ticker.C {
+			if set.Contains(count) {
+				close(chEnd)
+				return
+			}
+		}
+	}()
+	close(chStart)
+	wg.Wait()
+	sum := 0
+	for _, v := range adds {
+		sum += v
+	}
+	fmt.Println("sum=", sum) // prints 'sum= 100000'
+}
 ```
 
 ## ⌨️ Author
