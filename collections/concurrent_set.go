@@ -2,9 +2,12 @@ package collections
 
 import "sync"
 
+// ConcurrentSet is a thread safe set.
+// ConcurrentSet is safe for concurrent use by multiple goroutines.
+//   - T - value type
 type ConcurrentSet[T comparable] struct {
 	sync.RWMutex
-	mp       map[T]interface{}
+	mp       map[T]struct{}
 	capacity int
 }
 
@@ -14,7 +17,7 @@ func (cset *ConcurrentSet[T]) Add(value T) bool {
 	cset.Lock()
 	defer cset.Unlock()
 	if _, ok := cset.mp[value]; !ok {
-		cset.mp[value] = nil
+		cset.mp[value] = struct{}{}
 		return true
 	}
 	return false
@@ -27,6 +30,8 @@ func (cset *ConcurrentSet[T]) Contains(value T) bool {
 	cset.RUnlock()
 	return res
 }
+
+// Size returns the current size of the ConcurrentSet
 func (cset *ConcurrentSet[T]) Size() int {
 	cset.RLock()
 	defer cset.RUnlock()
@@ -45,12 +50,12 @@ func (cset *ConcurrentSet[T]) ToSlice() []T {
 // NewConcurrentSet returns a new empty ConcurrentSet instance
 //   - T - value type
 func NewConcurrentSet[T comparable]() *ConcurrentSet[T] {
-	return &ConcurrentSet[T]{mp: make(map[T]interface{})}
+	return &ConcurrentSet[T]{mp: make(map[T]struct{})}
 }
 
 // NewConcurrentSetCapacity returns a new empty ConcurrentSet instance with an initial space size (capacity)
 //   - T - value type
 //   - capacity - initial space size
 func NewConcurrentSetCapacity[T comparable](capacity int) *ConcurrentSet[T] {
-	return &ConcurrentSet[T]{mp: make(map[T]interface{}, capacity), capacity: capacity}
+	return &ConcurrentSet[T]{mp: make(map[T]struct{}, capacity), capacity: capacity}
 }
