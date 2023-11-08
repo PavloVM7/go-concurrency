@@ -37,13 +37,15 @@ func (cmap *ConcurrentMap[K, V]) ForEachRead(f func(key K, value V)) {
 //
 // If the value type (V) is a reference type, this method can be used to modify values
 // Note! Do NOT USE ConcurrentMap methods inside the 'f' function, as this will cause a deadlock.
+//
+//revive:disable:confusing-naming
 func (cmap *ConcurrentMap[K, V]) ForEach(f func(key K, value V)) {
 	cmap.Lock()
 	for k, v := range cmap.mp {
 		f(k, v)
 	}
 	cmap.Unlock()
-}
+} //revive:enable:confusing-naming
 
 // PutIfNotExists maps the specified key (key) to the specified value (value)
 // if the key doesn't exist returns true and a new value (value).
@@ -140,16 +142,22 @@ func (cmap *ConcurrentMap[K, V]) Keys() []K {
 }
 
 // Size returns the number of key-value mappings in this map.
+//
+//revive:disable:confusing-naming
 func (cmap *ConcurrentMap[K, V]) Size() int {
 	cmap.RLock()
 	defer cmap.RUnlock()
 	return len(cmap.mp)
-}
+} //revive:enable:confusing-naming
 
 // IsEmpty returns true if the ConcurrentMap does not contain any (key, value) pairs
+//
+//revive:disable:confusing-naming
 func (cmap *ConcurrentMap[K, V]) IsEmpty() bool {
-	return cmap.Size() == 0
-}
+	cmap.RLock()
+	defer cmap.RUnlock()
+	return len(cmap.mp) == 0
+} //revive:enable:confusing-naming
 
 // Copy returns a shallow copy of this ConcurrentMap instance: the keys and the values themselves are not copies.
 func (cmap *ConcurrentMap[K, V]) Copy() map[K]V {

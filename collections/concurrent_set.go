@@ -11,6 +11,34 @@ type ConcurrentSet[T comparable] struct {
 	capacity int
 }
 
+// ForEach performs a given action for each value of the ConcurrentSet
+//   - f - the function, that will be called for each value in ConcurrentSet
+//
+// It should not be used to modify values if the value type (T) is a reference type,
+// because a read lock is used under the hood.
+func (cset *ConcurrentSet[T]) ForEach(f func(value T)) {
+	cset.RLock()
+	for k := range cset.mp {
+		f(k)
+	}
+	cset.RUnlock()
+}
+
+// AddAll adds all the specified values to the ConcurrentSet.
+// Returns true if this ConcurrentSet changed as result of the call.
+func (cset *ConcurrentSet[T]) AddAll(values ...T) bool {
+	changed := false
+	cset.Lock()
+	for _, value := range values {
+		if _, ok := cset.mp[value]; !ok {
+			cset.mp[value] = struct{}{}
+			changed = true
+		}
+	}
+	cset.Unlock()
+	return changed
+}
+
 // Add adds a specified value to the set.
 // Returns true if the value did not exist and was added to the set, otherwise returns false.
 func (cset *ConcurrentSet[T]) Add(value T) bool {
@@ -37,6 +65,15 @@ func (cset *ConcurrentSet[T]) Size() int {
 	defer cset.RUnlock()
 	return len(cset.mp)
 }
+
+// IsEmpty returns true if the ConcurrentSet does not contain any values
+func (cset *ConcurrentSet[T]) IsEmpty() bool {
+	cset.RLock()
+	defer cset.RUnlock()
+	return len(cset.mp) == 0
+}
+
+// ToSlice returns a slice of ConcurrentSet elements
 func (cset *ConcurrentSet[T]) ToSlice() []T {
 	cset.RLock()
 	result := make([]T, 0, len(cset.mp))
@@ -58,4 +95,12 @@ func NewConcurrentSet[T comparable]() *ConcurrentSet[T] {
 //   - capacity - initial space size
 func NewConcurrentSetCapacity[T comparable](capacity int) *ConcurrentSet[T] {
 	return &ConcurrentSet[T]{mp: make(map[T]struct{}, capacity), capacity: capacity}
+}
+
+// NewConcurrentSetWithValues returns a new instance of ConcurrentSet containing specified values
+//   - values ...T - values that the ConcurrentSet will contain
+func NewConcurrentSetWithValues[T comparable](values ...T) *ConcurrentSet[T] {
+	result := NewConcurrentSetCapacity[T](len(values))
+	result.AddAll(values...)
+	return result
 }
