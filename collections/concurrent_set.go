@@ -1,3 +1,7 @@
+// Copyright Ⓒ 2023 Pavlo Moisieienko. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package collections
 
 import "sync"
@@ -57,6 +61,17 @@ func (cset *ConcurrentSet[T]) Contains(value T) bool {
 	_, res := cset.mp[value]
 	cset.RUnlock()
 	return res
+}
+
+// Clear clears the set
+func (cset *ConcurrentSet[T]) Clear() {
+	cset.Lock()
+	if cset.capacity > 0 {
+		cset.mp = make(map[T]struct{}, cset.capacity)
+	} else {
+		cset.mp = make(map[T]struct{})
+	}
+	cset.Unlock()
 }
 
 // Size returns the current size of the ConcurrentSet

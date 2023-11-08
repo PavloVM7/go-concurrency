@@ -3,15 +3,17 @@
 
 This module contains some thread safe entities and collections
 
+To install this package use the command:
+
+```
+go get -u github.com/PavloVM7/go-concurrency
+```
+
 ## ConcurrentMap
 
 `ConcurrentMap` is a thread-safe map implementation
 
 ### How to use
-
-```
-go get -u github.com/PavloVM7/go-concurrency
-```
 
 ``` go
 cm := NewConcurrentMap[int, int]() // or NewConcurrentMapCapacity[int, int](128) with initial capacity 128
@@ -44,5 +46,17 @@ go func() {
     }
 }()
 ```
+
+## ConcurrentSet
+
+`ConcurrentSet` is a thread safe set.
+
+### How to use
+
+``` go
+const maxValue = 10_000
+set := NewConcurrentSetCapacity[int](maxValue)
+```
+
 ## ⌨️ Author
 [@PavloVM7](https://github.com/PavloVM7) - Idea & Initial work

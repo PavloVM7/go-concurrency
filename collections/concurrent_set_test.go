@@ -121,6 +121,17 @@ func TestConcurrentSet_IsEmpty(t *testing.T) {
 	}
 }
 
+func TestConcurrentSet_Clear(t *testing.T) {
+	set := NewConcurrentSetWithValues[int](1, 2, 3)
+	if set.Size() != 3 {
+		t.Fatalf("wrong set size: %d, want: %d", set.Size(), 3)
+	}
+	set.Clear()
+	if !set.IsEmpty() {
+		t.Fatal("expected empty set")
+	}
+}
+
 func TestNewConcurrentSetCapacity(t *testing.T) {
 	const capacity = 123
 	set := NewConcurrentSetCapacity[string](capacity)

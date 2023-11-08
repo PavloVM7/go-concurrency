@@ -171,6 +171,8 @@ func (cmap *ConcurrentMap[K, V]) Copy() map[K]V {
 }
 
 // Clear clears the map
+//
+//revive:disable:confusing-naming
 func (cmap *ConcurrentMap[K, V]) Clear() {
 	cmap.Lock()
 	if cmap.capacity > 0 {
@@ -179,7 +181,7 @@ func (cmap *ConcurrentMap[K, V]) Clear() {
 		cmap.mp = make(map[K]V)
 	}
 	cmap.Unlock()
-}
+} //revive:enable:confusing-naming
 
 // NewConcurrentMap creates and returns a new empty ConcurrentMap instance.
 //   - K - comparable key type;
