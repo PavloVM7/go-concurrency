@@ -51,7 +51,7 @@ func BenchmarkConcurrentSet_Add(b *testing.B) {
 				addFnc(bmi.threads)
 				b.StopTimer()
 				if set.Size() != count {
-					b.Fatal("wrong map size", "expected:", count, "actual:", set.Size())
+					b.Fatal("incorrect map size", "expected:", count, "actual:", set.Size())
 				}
 				b.StartTimer()
 			}
