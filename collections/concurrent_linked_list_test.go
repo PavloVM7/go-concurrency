@@ -163,7 +163,7 @@ func TestConcurrentLinkedList_RemoveLast_before_last(t *testing.T) {
 	list := NewConcurrentLinkedList[int]()
 	list.AddLast(2)
 	list.AddFirst(1)
-	assert.Equal(t, 2, list.Size(), "wrong list size")
+	assert.Equal(t, 2, list.Size(), "incorrect list size")
 	actual, ok := list.RemoveLast()
 	assert.True(t, ok)
 	assert.Equal(t, 2, actual)
@@ -182,7 +182,7 @@ func TestConcurrentLinkedList_RemoveLast_before_last(t *testing.T) {
 func TestConcurrentLinkedList_RemoveLast_single(t *testing.T) {
 	list := NewConcurrentLinkedList[int]()
 	list.AddFirst(1)
-	assert.Equal(t, 1, list.Size(), "wrong list size")
+	assert.Equal(t, 1, list.Size(), "incorrect list size")
 	actual, ok := list.RemoveLast()
 	assert.True(t, ok)
 	assert.Equal(t, 1, actual)
@@ -193,7 +193,7 @@ func TestConcurrentLinkedList_RemoveLast_single(t *testing.T) {
 func TestConcurrentLinkedList_RemoveLast_empty(t *testing.T) {
 	list := NewConcurrentLinkedList[int]()
 	actual, ok := list.RemoveLast()
-	assert.Equal(t, 0, list.Size(), "wrong list size")
+	assert.Equal(t, 0, list.Size(), "incorrect list size")
 	assert.False(t, ok)
 	assert.Equal(t, 0, actual, "unexpected value")
 }
@@ -208,7 +208,7 @@ func TestConcurrentLinkedList_Get(t *testing.T) {
 	list.AddLast(crt(4))
 	list.AddLast(crt(5))
 
-	assert.Equal(t, 5, list.Size(), "wrong list size")
+	assert.Equal(t, 5, list.Size(), "incorrect list size")
 
 	for i := 0; i < list.Size(); i++ {
 		actual, err := list.Get(i)
@@ -221,7 +221,7 @@ func TestConcurrentLinkedList_Get_fail(t *testing.T) {
 	list := NewConcurrentLinkedList[string]()
 	val, err := list.Get(-1)
 	assert.ErrorIs(t, err, ErrIndexOutOfRange, "unexpected error")
-	assert.Equal(t, "", val, "wrong default value")
+	assert.Equal(t, "", val, "incorrect default value")
 }
 func TestConcurrentLinkedList_ToArray_empty(t *testing.T) {
 	list := NewConcurrentLinkedList[int]()
@@ -235,11 +235,11 @@ func TestConcurrentLinkedList_ToArray(t *testing.T) {
 	list.AddFirst(1)
 	list.AddLast(4)
 	list.AddLast(5)
-	assert.Equal(t, 5, list.Size(), "wrong list size")
+	assert.Equal(t, 5, list.Size(), "incorrect list size")
 	actual := list.ToArray()
-	assert.Equal(t, list.Size(), len(actual), "wrong array size")
+	assert.Equal(t, list.Size(), len(actual), "incorrect array size")
 	expected := []int{1, 2, 3, 4, 5}
-	assert.Equal(t, expected, actual, "wrong array")
+	assert.Equal(t, expected, actual, "incorrect array")
 }
 func TestConcurrentLinkedList_AddLast(t *testing.T) {
 	list := NewConcurrentLinkedList[int]()
@@ -247,27 +247,27 @@ func TestConcurrentLinkedList_AddLast(t *testing.T) {
 	list.AddLast(2)
 	list.AddLast(3)
 
-	assert.Equal(t, 3, list.Size(), "wrong list size")
+	assert.Equal(t, 3, list.Size(), "incorrect list size")
 
 	last, lok := list.GetLast()
 	assert.True(t, lok, "last value doesn't exist")
-	assert.Equal(t, 3, last, "wrong last value")
+	assert.Equal(t, 3, last, "incorrect last value")
 
 	first, ok := list.GetFirst()
 	assert.True(t, ok, "first value does not exist")
-	assert.Equal(t, 1, first, "wrong first value")
+	assert.Equal(t, 1, first, "incorrect first value")
 }
 func TestConcurrentLinkedList_AddLast_first(t *testing.T) {
 	list := NewConcurrentLinkedList[int]()
 	list.AddLast(1)
-	assert.Equal(t, 1, list.Size(), "wrong list size")
+	assert.Equal(t, 1, list.Size(), "incorrect list size")
 
 	last, lok := list.GetLast()
 	assert.True(t, lok, "last value doesn't exist")
-	assert.Equal(t, 1, last, "wrong last value")
+	assert.Equal(t, 1, last, "incorrect last value")
 	actual, ok := list.GetFirst()
 	assert.True(t, ok, "first value doesn't exist")
-	assert.Equal(t, 1, actual, "wrong first value")
+	assert.Equal(t, 1, actual, "incorrect first value")
 
 	assert.Equal(t, last, actual, "the last and first values aren't the same")
 }
@@ -276,25 +276,25 @@ func TestConcurrentLinkedList_AddFirst(t *testing.T) {
 	list.AddFirst(1)
 	list.AddFirst(2)
 	list.AddFirst(3)
-	assert.Equal(t, 3, list.Size(), "wrong list size")
+	assert.Equal(t, 3, list.Size(), "incorrect list size")
 	actual, ok := list.GetFirst()
 	assert.True(t, ok, "first value does not exist")
-	assert.Equal(t, 3, actual, "wrong first value")
+	assert.Equal(t, 3, actual, "incorrect first value")
 
 	last, lok := list.GetLast()
 	assert.True(t, lok, "last value doesn't exist")
-	assert.Equal(t, 1, last, "wrong last value")
+	assert.Equal(t, 1, last, "incorrect last value")
 }
 func TestConcurrentLinkedList_AddFirst_first(t *testing.T) {
 	list := NewConcurrentLinkedList[int]()
 	list.AddFirst(1)
-	assert.Equal(t, 1, list.Size(), "wrong list size")
+	assert.Equal(t, 1, list.Size(), "incorrect list size")
 	actual, ok := list.GetFirst()
 	assert.True(t, ok, "the value has not been added")
-	assert.Equal(t, 1, actual, "wrong first value")
+	assert.Equal(t, 1, actual, "incorrect first value")
 	last, lok := list.GetLast()
 	assert.True(t, lok, "the last value does not exist")
-	assert.Equal(t, 1, last, "wrong last value")
+	assert.Equal(t, 1, last, "incorrect last value")
 	assert.Same(t, list.first, list.last, "the last and first values are not the same")
 }
 func TestConcurrentLinkedList_GetFirst(t *testing.T) {
@@ -341,7 +341,7 @@ func TestConcurrentLinkedList_GetFirst_empty_list_not_nil(t *testing.T) {
 
 func TestNewConcurrentLinkedListItems(t *testing.T) {
 	list := NewConcurrentLinkedListItems[string]("string 1", "string 2", "string 3")
-	assert.Equal(t, 3, list.Size(), "wrong list size")
+	assert.Equal(t, 3, list.Size(), "incorrect list size")
 	actual1, _ := list.Get(0)
 	assert.Equal(t, "string 1", actual1)
 	actual2, _ := list.Get(1)
