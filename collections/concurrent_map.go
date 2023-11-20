@@ -12,7 +12,7 @@ import "sync"
 //   - K - comparable key type;
 //   - V - value type.
 type ConcurrentMap[K comparable, V any] struct {
-	sync.RWMutex
+	mu       sync.RWMutex
 	mp       map[K]V
 	capacity int
 }
@@ -25,11 +25,11 @@ type ConcurrentMap[K comparable, V any] struct {
 // Note! ConcurrentMap methods, such as Get and Size can be used inside the 'f' function.
 // However, you should not use methods that modify ConcurrentMap, as this will cause a deadlock.
 func (cmap *ConcurrentMap[K, V]) ForEachRead(f func(key K, value V)) {
-	cmap.RLock()
+	cmap.mu.RLock()
 	for k, v := range cmap.mp {
 		f(k, v)
 	}
-	cmap.RUnlock()
+	cmap.mu.RUnlock()
 }
 
 // ForEach performs a given action for each (key, value)
@@ -40,11 +40,11 @@ func (cmap *ConcurrentMap[K, V]) ForEachRead(f func(key K, value V)) {
 //
 //revive:disable:confusing-naming
 func (cmap *ConcurrentMap[K, V]) ForEach(f func(key K, value V)) {
-	cmap.Lock()
+	cmap.mu.Lock()
 	for k, v := range cmap.mp {
 		f(k, v)
 	}
-	cmap.Unlock()
+	cmap.mu.Unlock()
 } //revive:enable:confusing-naming
 
 // PutIfNotExists maps the specified key (key) to the specified value (value)
@@ -53,8 +53,8 @@ func (cmap *ConcurrentMap[K, V]) ForEach(f func(key K, value V)) {
 //   - key - the key with which a specified value is to be assigned
 //   - value - the value to be associated with the specified key
 func (cmap *ConcurrentMap[K, V]) PutIfNotExists(key K, value V) (bool, V) {
-	cmap.Lock()
-	defer cmap.Unlock()
+	cmap.mu.Lock()
+	defer cmap.mu.Unlock()
 	if old, ok := cmap.mp[key]; ok {
 		return false, old
 	}
@@ -90,8 +90,8 @@ func (cmap *ConcurrentMap[K, V]) RemoveIfExistsDoubleCheck(key K) (bool, V) {
 // otherwise it returns false and the default value for the value type.
 //   - key - the key that needs to be removed
 func (cmap *ConcurrentMap[K, V]) RemoveIfExists(key K) (bool, V) {
-	cmap.Lock()
-	defer cmap.Unlock()
+	cmap.mu.Lock()
+	defer cmap.mu.Unlock()
 	old, ok := cmap.mp[key]
 	if !ok {
 		return false, old
@@ -103,9 +103,9 @@ func (cmap *ConcurrentMap[K, V]) RemoveIfExists(key K) (bool, V) {
 // Remove removes the key and its corresponding value from the ConcurrentMap.
 //   - key - the key that needs to be removed
 func (cmap *ConcurrentMap[K, V]) Remove(key K) {
-	cmap.Lock()
+	cmap.mu.Lock()
 	delete(cmap.mp, key)
-	cmap.Unlock()
+	cmap.mu.Unlock()
 }
 
 // Put maps the specified key (key) to the specified value (value).
@@ -113,9 +113,9 @@ func (cmap *ConcurrentMap[K, V]) Remove(key K) {
 //   - key - the key with which a specified value is to be assigned
 //   - value - the value to be associated with the specified key
 func (cmap *ConcurrentMap[K, V]) Put(key K, value V) {
-	cmap.Lock()
+	cmap.mu.Lock()
 	cmap.mp[key] = value
-	cmap.Unlock()
+	cmap.mu.Unlock()
 }
 
 // Get returns the value to which the specified key is mapped and the sign of existence of this value.
@@ -124,20 +124,20 @@ func (cmap *ConcurrentMap[K, V]) Put(key K, value V) {
 // If a value for the key exists, its value is returned and true,
 // otherwise the default value for the value type is returned and false.
 func (cmap *ConcurrentMap[K, V]) Get(key K) (V, bool) {
-	cmap.RLock()
+	cmap.mu.RLock()
 	val, ok := cmap.mp[key]
-	cmap.RUnlock()
+	cmap.mu.RUnlock()
 	return val, ok
 }
 
 // Keys returns a slice of the keys contained in this map
 func (cmap *ConcurrentMap[K, V]) Keys() []K {
-	cmap.RLock()
+	cmap.mu.RLock()
 	result := make([]K, 0, len(cmap.mp))
 	for k := range cmap.mp {
 		result = append(result, k)
 	}
-	cmap.RUnlock()
+	cmap.mu.RUnlock()
 	return result
 }
 
@@ -145,8 +145,8 @@ func (cmap *ConcurrentMap[K, V]) Keys() []K {
 //
 //revive:disable:confusing-naming
 func (cmap *ConcurrentMap[K, V]) Size() int {
-	cmap.RLock()
-	defer cmap.RUnlock()
+	cmap.mu.RLock()
+	defer cmap.mu.RUnlock()
 	return len(cmap.mp)
 } //revive:enable:confusing-naming
 
@@ -154,19 +154,19 @@ func (cmap *ConcurrentMap[K, V]) Size() int {
 //
 //revive:disable:confusing-naming
 func (cmap *ConcurrentMap[K, V]) IsEmpty() bool {
-	cmap.RLock()
-	defer cmap.RUnlock()
+	cmap.mu.RLock()
+	defer cmap.mu.RUnlock()
 	return len(cmap.mp) == 0
 } //revive:enable:confusing-naming
 
 // Copy returns a shallow copy of this ConcurrentMap instance: the keys and the values themselves are not copies.
 func (cmap *ConcurrentMap[K, V]) Copy() map[K]V {
-	cmap.RLock()
+	cmap.mu.RLock()
 	result := make(map[K]V, len(cmap.mp))
 	for key, value := range cmap.mp {
 		result[key] = value
 	}
-	cmap.RUnlock()
+	cmap.mu.RUnlock()
 	return result
 }
 
@@ -174,13 +174,13 @@ func (cmap *ConcurrentMap[K, V]) Copy() map[K]V {
 //
 //revive:disable:confusing-naming
 func (cmap *ConcurrentMap[K, V]) Clear() {
-	cmap.Lock()
+	cmap.mu.Lock()
 	if cmap.capacity > 0 {
 		cmap.mp = make(map[K]V, cmap.capacity)
 	} else {
 		cmap.mp = make(map[K]V)
 	}
-	cmap.Unlock()
+	cmap.mu.Unlock()
 } //revive:enable:confusing-naming
 
 // NewConcurrentMap creates and returns a new empty ConcurrentMap instance.
