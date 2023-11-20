@@ -121,7 +121,7 @@ func TestConcurrentMap_RemoveIfExistsDoubleCheck(t *testing.T) {
 		t.Fatalf("value not exists for key %v", key)
 	}
 	if actual != val {
-		t.Fatalf("wrong value, expected: %v, actual: %v", val, actual)
+		t.Fatalf("incorrect value, expected: %v, actual: %v", val, actual)
 	}
 	ok1, actual1 := cm.RemoveIfExistsDoubleCheck(key)
 	if ok1 {
@@ -141,7 +141,7 @@ func TestConcurrentMap_RemoveIfExists(t *testing.T) {
 		t.Fatalf("value not exists for key %v", key)
 	}
 	if actual != val {
-		t.Fatalf("wrong value, expected: %v, actual: %v", val, actual)
+		t.Fatalf("incorrect value, expected: %v, actual: %v", val, actual)
 	}
 	ok1, actual1 := cm.RemoveIfExists(key)
 	if ok1 {
@@ -170,7 +170,7 @@ func TestConcurrentMap_Put(t *testing.T) {
 		t.Fatal("Put(), value not exists")
 	}
 	if actual != 1 {
-		t.Fatalf("Put(), wrong value, expected: %v, actual: %v", 1, actual)
+		t.Fatalf("Put(), incorrect value, expected: %v, actual: %v", 1, actual)
 	}
 	cm.Put(key, 3)
 	actual1, ok1 := cm.Get(key)
@@ -197,7 +197,7 @@ func TestConcurrentMap_Get(t *testing.T) {
 		cm.Put(tt.key, tt.val)
 	}
 	if cm.Size() != len(tests) {
-		t.Fatalf("wrong size, want: %d, got: %d", len(tests), cm.Size())
+		t.Fatalf("incorrect size, want: %d, got: %d", len(tests), cm.Size())
 	}
 
 	for _, tt := range tests {
@@ -206,7 +206,7 @@ func TestConcurrentMap_Get(t *testing.T) {
 			t.Fatalf("the value %v for the key %v not exists", tt.val, tt.key)
 		}
 		if got != tt.val {
-			t.Fatalf("wrong value, expected: %v, actual: %v", tt.val, got)
+			t.Fatalf("incorrect value, expected: %v, actual: %v", tt.val, got)
 		}
 	}
 }
@@ -227,12 +227,12 @@ func TestConcurrentMap_Copy(t *testing.T) {
 	}
 	cpy := cm.Copy()
 	if len(cpy) != 3 {
-		t.Fatalf("wrong len, expected: %v, actual: %v", 3, len(cpy))
+		t.Fatalf("incorrect len, expected: %v, actual: %v", 3, len(cpy))
 	}
 	for _, tt := range tests {
 		actual := cpy[tt.key]
 		if actual != tt.val {
-			t.Fatalf("wrong value, expected: %v, actual: %v", tt.val, actual)
+			t.Fatalf("incorrect value, expected: %v, actual: %v", tt.val, actual)
 		}
 	}
 }
@@ -256,7 +256,7 @@ func TestConcurrentMap_Keys(t *testing.T) {
 	}
 	keys := cm.Keys()
 	if len(keys) != cm.Size() {
-		t.Fatalf("wrong key slice length: %d, expected: %d", len(keys), cm.Size())
+		t.Fatalf("incorrect key slice length: %d, expected: %d", len(keys), cm.Size())
 	}
 	contains := func(key string) bool {
 		for _, k := range keys {
@@ -276,13 +276,13 @@ func TestConcurrentMap_Keys(t *testing.T) {
 func TestConcurrentMap_Clear(t *testing.T) {
 	cm := NewConcurrentMap[int, int]()
 	if cm.capacity != 0 {
-		t.Fatal("wrong capacity")
+		t.Fatal("incorrect capacity")
 	}
 	cm.Put(1, 1)
 	cm.Put(2, 2)
 	cm.Put(3, 3)
 	if cm.Size() != 3 {
-		t.Fatal("wrong map size")
+		t.Fatal("incorrect map size")
 	}
 	cm.Clear()
 	if cm.Size() != 0 {
@@ -292,13 +292,13 @@ func TestConcurrentMap_Clear(t *testing.T) {
 func TestConcurrentMap_Clear_capacity(t *testing.T) {
 	cm := NewConcurrentMapCapacity[int, string](123)
 	if cm.capacity != 123 {
-		t.Fatal("wrong capacity")
+		t.Fatal("incorrect capacity")
 	}
 	cm.Put(1, "str")
 	cm.Put(2, "str")
 	cm.Put(3, "str")
 	if cm.Size() != 3 {
-		t.Fatal("wrong map size")
+		t.Fatal("incorrect map size")
 	}
 	cm.Clear()
 	if cm.Size() != 0 {
@@ -310,7 +310,7 @@ func TestConcurrentMap_Size(t *testing.T) {
 	const capacity = 123
 	cm := NewConcurrentMapCapacity[int, string](capacity)
 	if cm.Size() != 0 {
-		t.Fatalf("wrong size: expected %d, actual: %d", 0, cm.Size())
+		t.Fatalf("incorrect size: expected %d, actual: %d", 0, cm.Size())
 	}
 	if cm.capacity != capacity {
 		t.Fatalf("invalid capacity: %d, want: %d", cm.capacity, cm.capacity)
@@ -321,7 +321,7 @@ func TestConcurrentMap_IsEmpty(t *testing.T) {
 	const capacity = 123
 	cm := NewConcurrentMapCapacity[int, string](capacity)
 	if cm.Size() != 0 {
-		t.Fatalf("wrong size: expected %d, actual: %d", 0, cm.Size())
+		t.Fatalf("incorrect size: expected %d, actual: %d", 0, cm.Size())
 	}
 	if !cm.IsEmpty() {
 		t.Fatal("expected empty map")
@@ -358,7 +358,7 @@ func TestNewConcurrentMap(t *testing.T) {
 	wg.Wait()
 	size := cm.Size()
 	if size != count {
-		t.Errorf("wrong map size: %d, expected: %d", size, count)
+		t.Errorf("incorrect map size: %d, expected: %d", size, count)
 	}
 	amounts := make([]int, threads)
 	cm.ForEachRead(func(key int, value int) {
@@ -374,7 +374,7 @@ func TestNewConcurrentMap(t *testing.T) {
 		t.Log(i, "=", c, "=", amounts[i])
 	}
 	if sum != int32(count) {
-		t.Fatalf("wrong count: %d, expected: %d", sum, count)
+		t.Fatalf("incorrect count: %d, expected: %d", sum, count)
 	}
 	t.Log("size:", size, "sum:", sum, "amount:", amount)
 }

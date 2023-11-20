@@ -17,7 +17,7 @@ func TestConcurrentSet_ForeEach(t *testing.T) {
 	})
 	expectedSum := 6
 	if sum != expectedSum {
-		t.Fatalf("wrong a sum value: %d, wanted: %d", sum, expectedSum)
+		t.Fatalf("incorrect a sum value: %d, wanted: %d", sum, expectedSum)
 	}
 }
 
@@ -30,7 +30,7 @@ func TestConcurrentSet_ToSlice(t *testing.T) {
 	actual := set.ToSlice()
 	slices.Sort(actual)
 	if !reflect.DeepEqual(tests, actual) {
-		t.Fatalf("wrong slice: '%v', expected: '%v'", actual, tests)
+		t.Fatalf("incorrect slice: '%v', expected: '%v'", actual, tests)
 	}
 }
 
@@ -127,7 +127,7 @@ func TestConcurrentSet_IsEmpty(t *testing.T) {
 func TestConcurrentSet_Clear(t *testing.T) {
 	set := NewConcurrentSetWithValues[int](1, 2, 3)
 	if set.Size() != 3 {
-		t.Fatalf("wrong set size: %d, want: %d", set.Size(), 3)
+		t.Fatalf("incorrect set size: %d, want: %d", set.Size(), 3)
 	}
 	set.Clear()
 	if !set.IsEmpty() {
@@ -139,14 +139,14 @@ func TestNewConcurrentSetCapacity(t *testing.T) {
 	const capacity = 123
 	set := NewConcurrentSetCapacity[string](capacity)
 	if set.capacity != capacity {
-		t.Fatalf("wrong capacity: %d, expected: %d", set.capacity, capacity)
+		t.Fatalf("incorrect capacity: %d, expected: %d", set.capacity, capacity)
 	}
 }
 
 func TestNewConcurrentSet(t *testing.T) {
 	set := NewConcurrentSet[string]()
 	if set.capacity != 0 {
-		t.Fatalf("wrong capacity: %d, expected: %d", set.capacity, 0)
+		t.Fatalf("incorrect capacity: %d, expected: %d", set.capacity, 0)
 	}
 }
 
@@ -154,7 +154,8 @@ func TestNewConcurrentSetWithValues(t *testing.T) {
 	tests := []string{"string 1", "string 2", "string 3"}
 	set := NewConcurrentSetWithValues[string](tests...)
 	if set.capacity != len(tests) {
-		t.Fatalf("TestNewConcurrentSetWithValues(), wrong set capacity: %d, want: %d", set.capacity, len(tests))
+		t.Fatalf("TestNewConcurrentSetWithValues(), incorrect set capacity: %d, want: %d",
+			set.capacity, len(tests))
 	}
 	for _, str := range tests {
 		if !set.Contains(str) {
@@ -205,6 +206,6 @@ func TestConcurrentSet(t *testing.T) {
 	fmt.Println("sum=", sum)
 	t.Log("sum=", sum, adds)
 	if sum != count {
-		t.Fatalf("wrong sum: %d, want: %d", sum, count)
+		t.Fatalf("incorrect sum: %d, want: %d", sum, count)
 	}
 }
