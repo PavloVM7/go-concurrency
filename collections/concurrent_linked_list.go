@@ -15,7 +15,7 @@ var (
 )
 
 type ConcurrentLinkedList[T any] struct {
-	sync.RWMutex
+	mu    sync.RWMutex
 	first *listItem[T]
 	last  *listItem[T]
 	size  int
@@ -31,8 +31,8 @@ func (clist *ConcurrentLinkedList[T]) RemoveFirst() (T, bool) {
 }
 func (clist *ConcurrentLinkedList[T]) RemoveLast() (T, bool) {
 	var res T
-	clist.Lock()
-	defer clist.Unlock()
+	clist.mu.Lock()
+	defer clist.mu.Unlock()
 	if clist.last != nil {
 		res = clist.removeItem(clist.last)
 		return res, true
@@ -40,13 +40,13 @@ func (clist *ConcurrentLinkedList[T]) RemoveLast() (T, bool) {
 	return res, false
 }
 func (clist *ConcurrentLinkedList[T]) Remove(index int) (T, error) {
-	clist.Lock()
+	clist.mu.Lock()
 	item, err := clist.getByIndex(index)
 	var res T
 	if err == nil {
 		res = clist.removeItem(item)
 	}
-	clist.Unlock()
+	clist.mu.Unlock()
 	return res, err
 }
 func (clist *ConcurrentLinkedList[T]) removeItem(item *listItem[T]) T {
@@ -63,7 +63,7 @@ func (clist *ConcurrentLinkedList[T]) removeItem(item *listItem[T]) T {
 }
 func (clist *ConcurrentLinkedList[T]) AddFirst(value T) {
 	item := &listItem[T]{value: value}
-	clist.Lock()
+	clist.mu.Lock()
 	if clist.first != nil {
 		clist.first.insert(item)
 	} else {
@@ -71,13 +71,13 @@ func (clist *ConcurrentLinkedList[T]) AddFirst(value T) {
 	}
 	clist.first = item
 	clist.size++
-	clist.Unlock()
+	clist.mu.Unlock()
 }
 func (clist *ConcurrentLinkedList[T]) AddLast(value T) {
 	item := &listItem[T]{value: value}
-	clist.Lock()
+	clist.mu.Lock()
 	clist.addLastInner(item)
-	clist.Unlock()
+	clist.mu.Unlock()
 }
 func (clist *ConcurrentLinkedList[T]) addLastInner(item *listItem[T]) {
 	if clist.last != nil {
@@ -90,8 +90,8 @@ func (clist *ConcurrentLinkedList[T]) addLastInner(item *listItem[T]) {
 }
 
 func (clist *ConcurrentLinkedList[T]) GetFirst() (T, bool) {
-	clist.RLock()
-	defer clist.RUnlock()
+	clist.mu.RLock()
+	defer clist.mu.RUnlock()
 	if clist.first != nil {
 		return clist.first.value, true
 	}
@@ -99,8 +99,8 @@ func (clist *ConcurrentLinkedList[T]) GetFirst() (T, bool) {
 	return res, false
 }
 func (clist *ConcurrentLinkedList[T]) GetLast() (T, bool) {
-	clist.RLock()
-	defer clist.RUnlock()
+	clist.mu.RLock()
+	defer clist.mu.RUnlock()
 	if clist.last != nil {
 		return clist.last.value, true
 	}
@@ -108,8 +108,8 @@ func (clist *ConcurrentLinkedList[T]) GetLast() (T, bool) {
 	return res, false
 }
 func (clist *ConcurrentLinkedList[T]) Get(index int) (T, error) {
-	clist.RLock()
-	defer clist.RUnlock()
+	clist.mu.RLock()
+	defer clist.mu.RUnlock()
 	item, err := clist.getByIndex(index)
 	if err != nil {
 		var res T
@@ -128,24 +128,24 @@ func (clist *ConcurrentLinkedList[T]) getByIndex(index int) (*listItem[T], error
 	return nil, ErrIndexOutOfRange
 }
 func (clist *ConcurrentLinkedList[T]) ToArray() []T {
-	clist.RLock()
+	clist.mu.RLock()
 	result := make([]T, clist.size)
 	for i, item := 0, clist.first; item != nil; i, item = i+1, item.next {
 		result[i] = item.value
 	}
-	clist.RUnlock()
+	clist.mu.RUnlock()
 	return result
 }
 func (clist *ConcurrentLinkedList[T]) Clear() {
-	clist.Lock()
+	clist.mu.Lock()
 	clist.first = nil
 	clist.last = nil
 	clist.size = 0
-	clist.Unlock()
+	clist.mu.Unlock()
 }
 func (clist *ConcurrentLinkedList[T]) Size() int {
-	clist.RLock()
-	defer clist.RUnlock()
+	clist.mu.RLock()
+	defer clist.mu.RUnlock()
 	return clist.size
 }
 func NewConcurrentLinkedList[T any]() *ConcurrentLinkedList[T] {
@@ -153,10 +153,10 @@ func NewConcurrentLinkedList[T any]() *ConcurrentLinkedList[T] {
 }
 func NewConcurrentLinkedListItems[T any](values ...T) *ConcurrentLinkedList[T] {
 	result := NewConcurrentLinkedList[T]()
-	result.Lock()
+	result.mu.Lock()
 	for _, val := range values {
 		result.addLastInner(&listItem[T]{value: val})
 	}
-	result.Unlock()
+	result.mu.Unlock()
 	return result
 }
