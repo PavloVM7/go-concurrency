@@ -48,6 +48,8 @@ func (clist *ConcurrentLinkedList[T]) RemoveLast() (T, bool) {
 
 // Remove removes the element at the specified position in this list and returns its value
 // or a default value (zero value) of type T and an error if the index is out of range.
+//
+//revive:disable:confusing-naming
 func (clist *ConcurrentLinkedList[T]) Remove(index int) (T, error) {
 	clist.mu.Lock()
 	item, err := clist.getByIndex(index)
@@ -57,7 +59,7 @@ func (clist *ConcurrentLinkedList[T]) Remove(index int) (T, error) {
 	}
 	clist.mu.Unlock()
 	return res, err
-}
+} //revive:enable:confusing-naming
 func (clist *ConcurrentLinkedList[T]) removeItem(item *listItem[T]) T {
 	res := item.value
 	item.removeYourself()
@@ -188,6 +190,8 @@ func (clist *ConcurrentLinkedList[T]) GetLast() (T, bool) {
 
 // Get returns an item at the specified position in this list
 // or the zero value of type T and an error if the index is out of range.
+//
+//revive:disable:confusing-naming
 func (clist *ConcurrentLinkedList[T]) Get(index int) (T, error) {
 	clist.mu.RLock()
 	defer clist.mu.RUnlock()
@@ -197,7 +201,7 @@ func (clist *ConcurrentLinkedList[T]) Get(index int) (T, error) {
 		return res, err
 	}
 	return item.value, nil
-}
+} //revive:enable:confusing-naming
 func (clist *ConcurrentLinkedList[T]) getByIndex(index int) (*listItem[T], error) {
 	if index >= 0 && index < clist.size {
 		for i, item := 0, clist.first; item != nil; i, item = i+1, item.next {
@@ -222,23 +226,31 @@ func (clist *ConcurrentLinkedList[T]) ToArray() []T {
 }
 
 // Clear clears this list
+//
+//revive:disable:confusing-naming
 func (clist *ConcurrentLinkedList[T]) Clear() {
 	clist.mu.Lock()
 	clist.first = nil
 	clist.last = nil
 	clist.size = 0
 	clist.mu.Unlock()
-}
+} //revive:enable:confusing-naming
 
 // Size returns the number of elements in this list
+//
+//revive:disable:confusing-naming
 func (clist *ConcurrentLinkedList[T]) Size() int {
 	clist.mu.RLock()
 	defer clist.mu.RUnlock()
 	return clist.size
-}
+} //revive:enable:confusing-naming
+
+// NewConcurrentLinkedList constructs an empty list
 func NewConcurrentLinkedList[T any]() *ConcurrentLinkedList[T] {
 	return &ConcurrentLinkedList[T]{}
 }
+
+// NewConcurrentLinkedListItems constructs a list containing the specified elements
 func NewConcurrentLinkedListItems[T any](values ...T) *ConcurrentLinkedList[T] {
 	result := NewConcurrentLinkedList[T]()
 	result.mu.Lock()

@@ -10,4 +10,6 @@ revive-no-tests:
 	-exclude collections/concurrent_map_test.go \
 	-exclude collections/concurrent_set_test.go \
 	-exclude collections/concurrent_set_benchmark_test.go \
+	-exclude collections/concurrent_linked_list_test.go \
+	-exclude collections/list_item_test.go \
     -formatter friendly ./...
