@@ -59,6 +59,13 @@ func TestLinkedList_RemoveAll(t *testing.T) {
 			wantArray:  []int{1, 3, 5},
 		},
 		{
+			name:       "middle double values",
+			list:       NewConcurrentLinkedListItems[int](2, 2, 1, 2, 2, 3, 2, 2, 5, 2, 2),
+			needRemove: func(value int) bool { return value == 2 },
+			want:       8,
+			wantArray:  []int{1, 3, 5},
+		},
+		{
 			name:       "even values",
 			list:       NewConcurrentLinkedListItems[int](1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
 			needRemove: func(value int) bool { return value%2 == 0 },

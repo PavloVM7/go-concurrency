@@ -14,6 +14,7 @@ var (
 	ErrIndexOutOfRange = errors.New("index is out of range")
 )
 
+// ConcurrentLinkedList is a thread safe implementation of a double-linked list
 type ConcurrentLinkedList[T any] struct {
 	mu    sync.RWMutex
 	first *listItem[T]
@@ -21,6 +22,8 @@ type ConcurrentLinkedList[T any] struct {
 	size  int
 }
 
+// RemoveFirst removes the first item from this list and returns its value and true if it exists.
+// If the list is empty, a default value (zero value) of type T and false is returned.
 func (clist *ConcurrentLinkedList[T]) RemoveFirst() (T, bool) {
 	var res T
 	if clist.first != nil {
@@ -29,6 +32,9 @@ func (clist *ConcurrentLinkedList[T]) RemoveFirst() (T, bool) {
 	}
 	return res, false
 }
+
+// RemoveLast removes the last item from this list and returns its value and true if it exists.
+// If the list is empty, a default value of type T (zero value) and false is returned.
 func (clist *ConcurrentLinkedList[T]) RemoveLast() (T, bool) {
 	var res T
 	clist.mu.Lock()
@@ -39,6 +45,9 @@ func (clist *ConcurrentLinkedList[T]) RemoveLast() (T, bool) {
 	}
 	return res, false
 }
+
+// Remove removes the element at the specified position in this list and returns its value
+// or a default value (zero value) of type T and an error if the index is out of range.
 func (clist *ConcurrentLinkedList[T]) Remove(index int) (T, error) {
 	clist.mu.Lock()
 	item, err := clist.getByIndex(index)
@@ -61,6 +70,11 @@ func (clist *ConcurrentLinkedList[T]) removeItem(item *listItem[T]) T {
 	clist.size--
 	return res
 }
+
+// RemoveLastOccurrence removes from the list the last occurrence of an element that satisfies the condition
+// specified by the needToRemove function (when traversing the list from tail to head).
+// Returns the value and index of the removed element, or the zero value of type T and -1 if no element was removed.
+//   - needToRemove - a function that is applied to each element to determine if it should be deleted
 func (clist *ConcurrentLinkedList[T]) RemoveLastOccurrence(needToRemove func(value T) bool) (T, int) {
 	clist.mu.Lock()
 	defer clist.mu.Unlock()
@@ -76,6 +90,11 @@ func (clist *ConcurrentLinkedList[T]) RemoveLastOccurrence(needToRemove func(val
 	var res T
 	return res, -1
 }
+
+// RemoveFirstOccurrence removes from the list the first occurrence of an element that satisfies the condition
+// specified by the function (when traversing the list from head to tail).
+// Returns the value and index of the removed element, or the zero value of type T and -1 if no element was removed.
+//   - needToRemove - a function that is applied to each element to determine if it should be deleted
 func (clist *ConcurrentLinkedList[T]) RemoveFirstOccurrence(needToRemove func(value T) bool) (T, int) {
 	index := -1
 	clist.mu.Lock()
@@ -91,6 +110,10 @@ func (clist *ConcurrentLinkedList[T]) RemoveFirstOccurrence(needToRemove func(va
 	var res T
 	return res, -1
 }
+
+// RemoveAll removes from the list all elements that satisfy the condition specified by the needToRemove function.
+// Returns the number of elements removed
+//   - needToRemove - a function that is applied to each element to determine if it should be deleted
 func (clist *ConcurrentLinkedList[T]) RemoveAll(needRemove func(value T) bool) int {
 	result := 0
 	clist.mu.Lock()
@@ -105,6 +128,9 @@ func (clist *ConcurrentLinkedList[T]) RemoveAll(needRemove func(value T) bool) i
 	clist.mu.Unlock()
 	return result
 }
+
+// AddFirst inserts specified element to the beginning this list.
+//   - value - the value to be inserted
 func (clist *ConcurrentLinkedList[T]) AddFirst(value T) {
 	item := &listItem[T]{value: value}
 	clist.mu.Lock()
@@ -117,6 +143,9 @@ func (clist *ConcurrentLinkedList[T]) AddFirst(value T) {
 	clist.size++
 	clist.mu.Unlock()
 }
+
+// AddLast appends specified element to the end of this list.
+//   - value - the value to be appended
 func (clist *ConcurrentLinkedList[T]) AddLast(value T) {
 	item := &listItem[T]{value: value}
 	clist.mu.Lock()
@@ -133,6 +162,8 @@ func (clist *ConcurrentLinkedList[T]) addLastInner(item *listItem[T]) {
 	clist.size++
 }
 
+// GetFirst returns the first element of this list and true if it exists.
+// If the list is empty, this method returns the zero value of type T and false
 func (clist *ConcurrentLinkedList[T]) GetFirst() (T, bool) {
 	clist.mu.RLock()
 	defer clist.mu.RUnlock()
@@ -142,6 +173,9 @@ func (clist *ConcurrentLinkedList[T]) GetFirst() (T, bool) {
 	var res T
 	return res, false
 }
+
+// GetLast returns the last element of this list and true if it exists.
+// If the lis is empty, this method returns the zero value of type T and false.
 func (clist *ConcurrentLinkedList[T]) GetLast() (T, bool) {
 	clist.mu.RLock()
 	defer clist.mu.RUnlock()
@@ -151,6 +185,9 @@ func (clist *ConcurrentLinkedList[T]) GetLast() (T, bool) {
 	var res T
 	return res, false
 }
+
+// Get returns an item at the specified position in this list
+// or the zero value of type T and an error if the index is out of range.
 func (clist *ConcurrentLinkedList[T]) Get(index int) (T, error) {
 	clist.mu.RLock()
 	defer clist.mu.RUnlock()
@@ -171,6 +208,9 @@ func (clist *ConcurrentLinkedList[T]) getByIndex(index int) (*listItem[T], error
 	}
 	return nil, ErrIndexOutOfRange
 }
+
+// ToArray returns an array containing all elements of this list in the proper sequence
+// (from the first to the last element).
 func (clist *ConcurrentLinkedList[T]) ToArray() []T {
 	clist.mu.RLock()
 	result := make([]T, clist.size)
@@ -180,6 +220,8 @@ func (clist *ConcurrentLinkedList[T]) ToArray() []T {
 	clist.mu.RUnlock()
 	return result
 }
+
+// Clear clears this list
 func (clist *ConcurrentLinkedList[T]) Clear() {
 	clist.mu.Lock()
 	clist.first = nil
@@ -187,6 +229,8 @@ func (clist *ConcurrentLinkedList[T]) Clear() {
 	clist.size = 0
 	clist.mu.Unlock()
 }
+
+// Size returns the number of elements in this list
 func (clist *ConcurrentLinkedList[T]) Size() int {
 	clist.mu.RLock()
 	defer clist.mu.RUnlock()
