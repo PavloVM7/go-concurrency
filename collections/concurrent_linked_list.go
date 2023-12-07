@@ -61,6 +61,50 @@ func (clist *ConcurrentLinkedList[T]) removeItem(item *listItem[T]) T {
 	clist.size--
 	return res
 }
+func (clist *ConcurrentLinkedList[T]) RemoveLastOccurrence(needToRemove func(value T) bool) (T, int) {
+	clist.mu.Lock()
+	defer clist.mu.Unlock()
+	index := clist.size
+	item := clist.last
+	for item != nil {
+		index--
+		if needToRemove(item.value) {
+			return clist.removeItem(item), index
+		}
+		item = item.prev
+	}
+	var res T
+	return res, -1
+}
+func (clist *ConcurrentLinkedList[T]) RemoveFirstOccurrence(needToRemove func(value T) bool) (T, int) {
+	index := -1
+	clist.mu.Lock()
+	defer clist.mu.Unlock()
+	item := clist.first
+	for item != nil {
+		index++
+		if needToRemove(item.value) {
+			return clist.removeItem(item), index
+		}
+		item = item.next
+	}
+	var res T
+	return res, -1
+}
+func (clist *ConcurrentLinkedList[T]) RemoveAll(needRemove func(value T) bool) int {
+	result := 0
+	clist.mu.Lock()
+	item := clist.first
+	for item != nil {
+		if needRemove(item.value) {
+			clist.removeItem(item)
+			result++
+		}
+		item = item.next
+	}
+	clist.mu.Unlock()
+	return result
+}
 func (clist *ConcurrentLinkedList[T]) AddFirst(value T) {
 	item := &listItem[T]{value: value}
 	clist.mu.Lock()
