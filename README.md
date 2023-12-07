@@ -98,5 +98,28 @@ func main() {
 }
 ```
 
+## ConcurrentLinkedList
+
+`ConcurrentLinkedList` is a thread safe linked list realisation
+
+```go
+package main
+
+import (
+	"fmt"
+	"sync"
+
+	"github.com/PavloVM7/go-concurrency/collections"
+)
+
+func main() {
+	list := collections.NewConcurrentLinkedList[int]()
+}
+
+/*
+output:
+*/
+```
+
 ## ⌨️ Author
 [@PavloVM7](https://github.com/PavloVM7) - Idea & Initial work

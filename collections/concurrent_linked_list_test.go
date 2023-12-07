@@ -4,9 +4,103 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"reflect"
+	"sync"
 	"testing"
 )
 
+func TestLinkedList_example(t *testing.T) {
+	list := NewConcurrentLinkedList[int]()
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 11; i <= 20; i++ {
+			list.AddLast(i) // adds items to the end of the list
+		}
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 10; i > 0; i-- {
+			list.AddFirst(i) // adds items to the head of the list
+		}
+	}()
+	wg.Wait()
+	size := list.Size()
+	fmt.Println("list size =", size)
+	items := list.ToArray()
+	fmt.Println("list items:", items)
+
+	item10, err := list.Get(10)
+	fmt.Printf("before remove item10 = %d, err = %v\n", item10, err)
+	item10, err = list.Remove(10) // removes 10th item
+	fmt.Printf("removed item10 = %d, err = %v\n", item10, err)
+	item10, err = list.Get(10)
+	fmt.Printf("after remove item10 = %d, err = %v\n", item10, err)
+	items = list.ToArray()
+	fmt.Println("list items:", items)
+
+	first, firstOk := list.RemoveFirst()
+	fmt.Printf("first element: %d, removed: %t\n", first, firstOk)
+	first, firstOk = list.GetFirst()
+	fmt.Printf("current first element: %d, exists: %t\n", first, firstOk)
+	items = list.ToArray()
+	fmt.Println("list items:", items)
+
+	last, lastOk := list.RemoveLast()
+	fmt.Printf("last element: %d, removed: %t\n", last, lastOk)
+	last, lastOk = list.GetLast()
+	fmt.Printf("current last element: %d, exists: %t\n", last, lastOk)
+	items = list.ToArray()
+	fmt.Println("list items:", items)
+
+	rFirst, fIndex := list.RemoveFirstOccurrence(func(value int) bool {
+		return value%2 != 0
+	})
+	fmt.Printf("removed first odd value: %d, index: %d\n", rFirst, fIndex)
+	items = list.ToArray()
+	fmt.Println("list items:", items)
+
+	rLast, lIndex := list.RemoveLastOccurrence(func(value int) bool {
+		return value%2 == 0
+	})
+	fmt.Printf("removed last even value: %d, index: %d\n", rLast, lIndex)
+	items = list.ToArray()
+	fmt.Println("list items:", items)
+
+}
+func TestLinkedList_RemoveAll_duplicates(t *testing.T) {
+	list := NewConcurrentLinkedList[int]()
+	fill := func() {
+		for i := 1; i <= 10; i++ {
+			if i%2 == 0 {
+				list.AddFirst(i)
+			} else {
+				list.AddLast(i)
+			}
+		}
+	}
+	var wg sync.WaitGroup
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			fill()
+		}()
+	}
+	wg.Wait()
+	assert.Equal(t, 100, list.Size())
+	present := make(map[int]struct{})
+	list.RemoveAll(func(value int) bool {
+		if _, ok := present[value]; !ok {
+			present[value] = struct{}{}
+			return false
+		}
+		return true
+	})
+	t.Log("list=", list.ToArray())
+	assert.Equal(t, 10, list.Size())
+}
 func TestLinkedList_RemoveAll(t *testing.T) {
 	type testCase[T any] struct {
 		name       string
