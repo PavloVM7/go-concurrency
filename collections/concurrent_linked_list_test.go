@@ -3,8 +3,241 @@ package collections
 import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"reflect"
 	"testing"
 )
+
+func TestLinkedList_RemoveAll(t *testing.T) {
+	type testCase[T any] struct {
+		name       string
+		list       *ConcurrentLinkedList[T]
+		needRemove func(value T) bool
+		want       T
+		wantArray  []T
+	}
+	tests := []testCase[int]{
+		{
+			name:       "empty",
+			list:       NewConcurrentLinkedList[int](),
+			needRemove: func(value int) bool { return value > 0 },
+			want:       0,
+			wantArray:  []int{},
+		},
+		{
+			name:       "not found",
+			list:       NewConcurrentLinkedListItems[int](1, 2, 3),
+			needRemove: func(value int) bool { return value == 5 },
+			want:       0,
+			wantArray:  []int{1, 2, 3},
+		},
+		{
+			name:       "single value",
+			list:       NewConcurrentLinkedListItems[int](1),
+			needRemove: func(value int) bool { return value == 1 },
+			want:       1,
+			wantArray:  []int{},
+		},
+		{
+			name:       "first value",
+			list:       NewConcurrentLinkedListItems[int](1, 2),
+			needRemove: func(value int) bool { return value == 1 },
+			want:       1,
+			wantArray:  []int{2},
+		},
+		{
+			name:       "last value",
+			list:       NewConcurrentLinkedListItems[int](1, 2),
+			needRemove: func(value int) bool { return value == 2 },
+			want:       1,
+			wantArray:  []int{1},
+		},
+		{
+			name:       "middle value",
+			list:       NewConcurrentLinkedListItems[int](2, 1, 2, 3, 2, 5, 2),
+			needRemove: func(value int) bool { return value == 2 },
+			want:       4,
+			wantArray:  []int{1, 3, 5},
+		},
+		{
+			name:       "even values",
+			list:       NewConcurrentLinkedListItems[int](1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+			needRemove: func(value int) bool { return value%2 == 0 },
+			want:       5,
+			wantArray:  []int{1, 3, 5, 7, 9},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.list.RemoveAll(tt.needRemove)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("RemoveAll() got = %v, want %v", got, tt.want)
+			}
+			gotArray := tt.list.ToArray()
+			if !reflect.DeepEqual(gotArray, tt.wantArray) {
+				t.Errorf("RemoveAll() gotArray = %v, wantArray %v", gotArray, tt.wantArray)
+			}
+			if tt.list.Size() != len(gotArray) {
+				t.Errorf("RemoveAll() gotSize = %v, wantSize %v", len(gotArray), tt.list.Size())
+			}
+		})
+	}
+}
+func TestLinkedList_RemoveLastOccurrence(t *testing.T) {
+	type testCase[T any] struct {
+		name       string
+		list       *ConcurrentLinkedList[T]
+		needRemove func(value T) bool
+		want       T
+		wantIndex  int
+		wantArray  []T
+	}
+	tests := []testCase[int]{
+		{
+			name:       "empty",
+			list:       NewConcurrentLinkedList[int](),
+			needRemove: func(value int) bool { return value > 0 },
+			want:       0,
+			wantIndex:  -1,
+			wantArray:  []int{},
+		},
+		{
+			name:       "not found",
+			list:       NewConcurrentLinkedListItems[int](1, 2, 3),
+			needRemove: func(value int) bool { return value == 5 },
+			want:       0,
+			wantIndex:  -1,
+			wantArray:  []int{1, 2, 3},
+		},
+		{
+			name:       "single value",
+			list:       NewConcurrentLinkedListItems[int](1),
+			needRemove: func(value int) bool { return value == 1 },
+			want:       1,
+			wantIndex:  0,
+			wantArray:  []int{},
+		},
+		{
+			name:       "first value",
+			list:       NewConcurrentLinkedListItems[int](1, 2),
+			needRemove: func(value int) bool { return value == 1 },
+			want:       1,
+			wantIndex:  0,
+			wantArray:  []int{2},
+		},
+		{
+			name:       "last value",
+			list:       NewConcurrentLinkedListItems[int](1, 2),
+			needRemove: func(value int) bool { return value == 2 },
+			want:       2,
+			wantIndex:  1,
+			wantArray:  []int{1},
+		},
+		{
+			name:       "middle value",
+			list:       NewConcurrentLinkedListItems[int](1, 2, 3, 2, 5),
+			needRemove: func(value int) bool { return value == 2 },
+			want:       2,
+			wantIndex:  3,
+			wantArray:  []int{1, 2, 3, 5},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotValue, gotIndex := tt.list.RemoveLastOccurrence(tt.needRemove)
+			if !reflect.DeepEqual(gotValue, tt.want) {
+				t.Errorf("RemoveLastOccurrence() got = %v, want %v", gotValue, tt.want)
+			}
+			if gotIndex != tt.wantIndex {
+				t.Errorf("RemoveLastOccurrence() gotIndex = %v, wantIndex %v", gotIndex, tt.wantIndex)
+			}
+			gotArray := tt.list.ToArray()
+			if !reflect.DeepEqual(gotArray, tt.wantArray) {
+				t.Errorf("RemoveLastOccurrence() gotArray = %v, wantArray %v", gotArray, tt.wantArray)
+			}
+			if tt.list.Size() != len(gotArray) {
+				t.Errorf("RemoveLastOccurrence() gotSize = %v, wantSize %v", len(gotArray), tt.list.Size())
+			}
+		})
+	}
+}
+func TestLinkedList_RemoveFirstOccurrence(t *testing.T) {
+	type testCase[T any] struct {
+		name       string
+		list       *ConcurrentLinkedList[T]
+		needRemove func(value T) bool
+		want       T
+		wantIndex  int
+		wantArray  []T
+	}
+	tests := []testCase[int]{
+		{
+			name:       "empty",
+			list:       NewConcurrentLinkedList[int](),
+			needRemove: func(value int) bool { return value > 0 },
+			want:       0,
+			wantIndex:  -1,
+			wantArray:  []int{},
+		},
+		{
+			name:       "not found",
+			list:       NewConcurrentLinkedListItems[int](1, 2, 3),
+			needRemove: func(value int) bool { return value == 5 },
+			want:       0,
+			wantIndex:  -1,
+			wantArray:  []int{1, 2, 3},
+		},
+		{
+			name:       "single value",
+			list:       NewConcurrentLinkedListItems[int](1),
+			needRemove: func(value int) bool { return value == 1 },
+			want:       1,
+			wantIndex:  0,
+			wantArray:  []int{},
+		},
+		{
+			name:       "first value",
+			list:       NewConcurrentLinkedListItems[int](1, 2),
+			needRemove: func(value int) bool { return value == 1 },
+			want:       1,
+			wantIndex:  0,
+			wantArray:  []int{2},
+		},
+		{
+			name:       "last value",
+			list:       NewConcurrentLinkedListItems[int](1, 2),
+			needRemove: func(value int) bool { return value == 2 },
+			want:       2,
+			wantIndex:  1,
+			wantArray:  []int{1},
+		},
+		{
+			name:       "middle value",
+			list:       NewConcurrentLinkedListItems[int](1, 2, 3, 2),
+			needRemove: func(value int) bool { return value == 2 },
+			want:       2,
+			wantIndex:  1,
+			wantArray:  []int{1, 3, 2},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotValue, gotIndex := tt.list.RemoveFirstOccurrence(tt.needRemove)
+			if !reflect.DeepEqual(gotValue, tt.want) {
+				t.Errorf("RemoveFirstOccurrence() got = %v, want %v", gotValue, tt.want)
+			}
+			if gotIndex != tt.wantIndex {
+				t.Errorf("RemoveFirstOccurrence() gotIndex = %v, wantIndex %v", gotIndex, tt.wantIndex)
+			}
+			gotArray := tt.list.ToArray()
+			if !reflect.DeepEqual(gotArray, tt.wantArray) {
+				t.Errorf("RemoveFirstOccurrence() gotArray = %v, wantArray %v", gotArray, tt.wantArray)
+			}
+			if tt.list.Size() != len(gotArray) {
+				t.Errorf("RemoveFirstOccurrence() gotSize = %v, wantSize %v", len(gotArray), tt.list.Size())
+			}
+		})
+	}
+}
 
 func TestConcurrentLinkedList_Remove(t *testing.T) {
 	const (
