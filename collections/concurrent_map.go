@@ -170,6 +170,18 @@ func (cmap *ConcurrentMap[K, V]) Copy() map[K]V {
 	return result
 }
 
+// TrimToSize trims the capacity of this ConcurrentMap instance to be the map's current size.
+// An application can use this operation to minimize the storage of a ConcurrentMap instance.
+func (cmap *ConcurrentMap[K, V]) TrimToSize() {
+	cmap.mu.Lock()
+	tmp := make(map[K]V, len(cmap.mp))
+	for k, v := range cmap.mp {
+		tmp[k] = v
+	}
+	cmap.mp = tmp
+	cmap.mu.Unlock()
+}
+
 // Clear clears the map
 //
 //revive:disable:confusing-naming

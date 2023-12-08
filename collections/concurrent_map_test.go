@@ -5,11 +5,68 @@
 package collections
 
 import (
+	"fmt"
+	"github.com/stretchr/testify/assert"
 	"reflect"
+	"runtime"
 	"sync"
 	"sync/atomic"
 	"testing"
 )
+
+func TestConcurrentMap_TrimToSize(t *testing.T) {
+	const amount = 1_000_0000
+	const rest = 20
+	value := func(i int) string {
+		return fmt.Sprintf("value-%d", i)
+	}
+	cm := NewConcurrentMapCapacity[int, string](amount)
+	for i := 1; i <= amount; i++ {
+		cm.Put(i, value(i))
+	}
+	assert.Equal(t, amount, cm.Size())
+
+	var m1 runtime.MemStats
+	runtime.ReadMemStats(&m1)
+
+	for i := rest + 1; i <= amount; i++ {
+		cm.Remove(i)
+	}
+	assert.Equal(t, rest, cm.Size())
+
+	var m2 runtime.MemStats
+	runtime.ReadMemStats(&m2)
+
+	runtime.GC()
+
+	var m3 runtime.MemStats
+	runtime.ReadMemStats(&m3)
+
+	cm.TrimToSize()
+
+	var m4 runtime.MemStats
+	runtime.ReadMemStats(&m4)
+
+	runtime.GC()
+
+	var m5 runtime.MemStats
+	runtime.ReadMemStats(&m5)
+
+	memToString := func(ms *runtime.MemStats) string {
+		return fmt.Sprintf("%d Kb", ms.Alloc/1024)
+	}
+
+	t.Logf("Memory after fill: %s; after remove: %s (GC: %s); after trim: %s (GC: %s)",
+		memToString(&m1), memToString(&m2), memToString(&m3), memToString(&m4), memToString(&m5))
+
+	assert.Equal(t, rest, cm.Size())
+	for i := 1; i <= rest; i++ {
+		expected := value(i)
+		actual, ok := cm.Get(i)
+		assert.True(t, ok)
+		assert.Equal(t, expected, actual)
+	}
+}
 
 func TestConcurrentMap_ForEachRead(t *testing.T) {
 	cm := NewConcurrentMap[int, int]()
