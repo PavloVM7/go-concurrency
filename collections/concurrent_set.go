@@ -55,7 +55,7 @@ func (cset *ConcurrentSet[T]) Add(value T) bool {
 	return false
 }
 
-// Remove removes value from the set.
+// Remove removes a value from the set.
 // Returns true if this ConcurrentSet changed as result of the call.
 func (cset *ConcurrentSet[T]) Remove(value T) bool {
 	cset.mu.Lock()
@@ -87,7 +87,7 @@ func (cset *ConcurrentSet[T]) TrimToSize() {
 	cset.mu.Unlock()
 }
 
-// Clear clears the set
+// Clear clears the set.
 func (cset *ConcurrentSet[T]) Clear() {
 	cset.mu.Lock()
 	if cset.capacity > 0 {
@@ -98,7 +98,7 @@ func (cset *ConcurrentSet[T]) Clear() {
 	cset.mu.Unlock()
 }
 
-// Size returns the current size of the ConcurrentSet
+// Size returns the current size of the ConcurrentSet.
 func (cset *ConcurrentSet[T]) Size() int {
 	cset.mu.RLock()
 	defer cset.mu.RUnlock()
