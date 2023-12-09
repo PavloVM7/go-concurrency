@@ -12,7 +12,7 @@ import (
 )
 
 func TestConcurrentSet_TrimToSize(t *testing.T) {
-	const amount = 1_000_0000
+	const amount = 1_000_000
 	const rest = 20
 	set := NewConcurrentSetCapacity[string](amount)
 	value := func(i int) string {

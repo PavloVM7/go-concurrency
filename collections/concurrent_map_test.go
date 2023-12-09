@@ -15,7 +15,7 @@ import (
 )
 
 func TestConcurrentMap_TrimToSize(t *testing.T) {
-	const amount = 1_000_0000
+	const amount = 1_000_000
 	const rest = 20
 	value := func(i int) string {
 		return fmt.Sprintf("value-%d", i)
