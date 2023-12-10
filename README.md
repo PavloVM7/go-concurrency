@@ -5,7 +5,7 @@ This module contains some thread safe entities and collections
 
 To install this package use the command:
 
-```
+```shell
 go get -u github.com/PavloVM7/go-concurrency
 ```
 
@@ -15,39 +15,257 @@ go get -u github.com/PavloVM7/go-concurrency
 
 ### How to use
 
-``` go
-cm := NewConcurrentMap[int, int]() // or NewConcurrentMapCapacity[int, int](128) with initial capacity 128
+```go
+package main
 
-go func() {
-    for ... {
-        if ok, _ := cm.PutIfNotExistsDoubleCheck(i, num); ok {
-            // do something
-        }
-    }
-}()
+import (
+	"fmt"
+	"github.com/PavloVM7/go-concurrency/collections"
+	"runtime"
+	"strings"
+	"sync"
+	"time"
+)
 
-go func() {
-    for ... {
-        if ok, old := cm.PutIfNotExistsDoubleCheck(i, num); !ok {
-            // do something with old value
-        }
-    }
-}()
+func showMap[K comparable, V any](mp map[K]V) string {
+	var res strings.Builder
+	res.WriteRune('[')
+	for k, v := range mp {
+		if res.Len() > 1 {
+			res.WriteString(", ")
+		}
+		res.WriteString(fmt.Sprintf("['%v' => '%v']", k, v))
+	}
+	res.WriteRune(']')
+	return res.String()
+}
 
-ticker := time.NewTicker(1 * time.Second)
-defer ticker.Stop()
-go func() {
-    for range ticker.C {
-        if cm.Size() > 100_000 {
-            cm.ForEachRead(func(key int, value int) { 
-                // process each (key, value) pair 
-            })
-            cm.Clear()
-        }
-    }
-}()
+func createStringValue(i int) string {
+	return fmt.Sprintf("value %d", i)
+}
+
+func main() {
+	println("👉 Example of using ConcurrentMap")
+	using := func(funcs string) {
+		fmt.Println("=== using ", funcs)
+	}
+
+	cmp := collections.NewConcurrentMapCapacity[int, string](10)
+
+	showKeys := func() {
+		fmt.Println("map keys:", cmp.Keys())
+	}
+	showCurMap := func() {
+		its := showMap(cmp.Copy())
+		fmt.Printf(">>> ConcurrentMap size: %d, entities: %v\n", cmp.Size(), its)
+	}
+	showCurMap()
+	isMapEmpty := func() {
+		fmt.Println("~~~ is map empty? -", cmp.IsEmpty())
+	}
+	isMapEmpty()
+
+	using("Put() and Get()")
+	key := 1
+	cmp.Put(key, "value 1")
+	value, ok := cmp.Get(key)
+	fmt.Printf("+ %d => '%s', exists: %t\n", key, value, ok)
+	showCurMap()
+	cmp.Put(key, "other value 1")
+	value, ok = cmp.Get(key)
+	fmt.Printf("+ %d => '%s', exists: %t\n", key, value, ok)
+	showCurMap()
+	isMapEmpty()
+
+	using("PutIfNotExists() and Keys()")
+	key = 2
+	ok, value = cmp.PutIfNotExists(key, "value 2")
+	fmt.Printf("+ %d => '%s', added: %t\n", key, value, ok)
+	ok, value = cmp.PutIfNotExists(key, "other value 2")
+	fmt.Printf("- %d => '%s', added: %t\n", key, value, ok)
+	for _, key = range []int{3, 4, 5} {
+		cmp.PutIfNotExists(key, createStringValue(key))
+	}
+	showCurMap()
+	fmt.Printf("keys: %v\n", cmp.Keys())
+
+	using("Remove()")
+	cmp.Remove(4)
+	cmp.Remove(123)
+	showKeys()
+	showCurMap()
+
+	using("RemoveIfExists()")
+	ok, value = cmp.RemoveIfExists(5)
+	fmt.Printf("+ key: %d, value: '%s', removed: %t\n", 5, value, ok)
+	showKeys()
+	ok, value = cmp.RemoveIfExists(5)
+	fmt.Printf("- key: %d, value: '%s', removed: %t\n", 5, value, ok)
+	showKeys()
+	showCurMap()
+
+	using("ForEachRead()")
+	sum := 0
+	var sb strings.Builder
+	cmp.ForEachRead(func(key int, value string) {
+		sum += key
+		if sb.Len() > 0 {
+			sb.WriteRune(',')
+		}
+		sb.WriteRune('\'')
+		sb.WriteString(value)
+		sb.WriteRune('\'')
+	})
+	fmt.Printf("sum of keys: %d, all values: \"%s\"\n", sum, sb.String())
+
+	using("Clear()")
+	fmt.Println("= before clearing")
+	showCurMap()
+	showKeys()
+	isMapEmpty()
+	cmp.Clear()
+	fmt.Println("= after clearing")
+	showCurMap()
+	showKeys()
+	isMapEmpty()
+
+	using("TrimToSize()")
+	const amount = 1_000_000
+	fillMap(cmp, amount, 3)
+	fmt.Println(">>> map size:", cmp.Size())
+
+	getMemStats := func() runtime.MemStats {
+		var mem runtime.MemStats
+		runtime.ReadMemStats(&mem)
+		return mem
+	}
+
+	memToString := func(mem runtime.MemStats) string { return fmt.Sprintf("%d Kb", mem.Alloc/1024) }
+
+	runtime.GC()
+
+	fmt.Printf(">>> map size: %d, memory usage: %s\n", cmp.Size(), memToString(getMemStats()))
+
+	removeValues(cmp, 6, amount, 3)
+
+	runtime.GC()
+
+	fmt.Printf("after removing memory usage: %s, map size: %d\n", memToString(getMemStats()), cmp.Size())
+	showKeys()
+
+	cmp.TrimToSize()
+
+	runtime.GC()
+
+	fmt.Printf("after TrimToSize() memory usage: %s, map size: %d\n", memToString(getMemStats()), cmp.Size())
+	showKeys()
+	showCurMap()
+}
+
+func fillMap(mp *collections.ConcurrentMap[int, string], amount, threads int) {
+	fmt.Printf("* filling map, amount: %d, threads: %d\n", amount, threads)
+	start := time.Now()
+	chStart := make(chan struct{})
+	var wg sync.WaitGroup
+	adds := make([]int, threads)
+	for i := 0; i < threads; i++ {
+		wg.Add(1)
+		go func(num int) {
+			defer wg.Done()
+			<-chStart
+			n := 0
+			_, ok := mp.Get(amount)
+			for !ok {
+				n++
+				if aok, _ := mp.PutIfNotExists(n, createStringValue(n)); aok {
+					adds[num]++
+				}
+				_, ok = mp.Get(amount)
+			}
+		}(i)
+	}
+	close(chStart)
+	wg.Wait()
+	fmt.Printf(">>> the map was filled, duration: %v, amount: %d, threads: %d, each thread added: %v\n",
+		time.Since(start), mp.Size(), threads, adds)
+}
+func removeValues(mp *collections.ConcurrentMap[int, string], start, end, threads int) {
+	fmt.Printf("* remove values from map, from %d to %d , threads: %d\n", start, end, threads)
+	st := time.Now()
+	chStart := make(chan struct{})
+	var wg sync.WaitGroup
+	adds := make([]int, threads)
+	for i := 0; i < threads; i++ {
+		wg.Add(1)
+		go func(num int) {
+			defer wg.Done()
+			<-chStart
+			for key := start; key <= end; key++ {
+				ok, _ := mp.RemoveIfExistsDoubleCheck(key)
+				if ok {
+					adds[num]++
+				}
+			}
+		}(i)
+	}
+	close(chStart)
+	wg.Wait()
+	fmt.Printf(">>> values were removed, duration: %v, map size: %d, threads: %d, each thread removed: %v\n",
+		time.Since(st), mp.Size(), threads, adds)
+}
 ```
 
+outputs like this:
+
+```text
+👉 Example of using ConcurrentMap
+>>> ConcurrentMap size: 0, entities: []
+~~~ is map empty? - true
+=== using  Put() and Get()
++ 1 => 'value 1', exists: true
+>>> ConcurrentMap size: 1, entities: [['1' => 'value 1']]
++ 1 => 'other value 1', exists: true
+>>> ConcurrentMap size: 1, entities: [['1' => 'other value 1']]
+~~~ is map empty? - false
+=== using  PutIfNotExists() and Keys()
++ 2 => 'value 2', added: true
+- 2 => 'value 2', added: false
+>>> ConcurrentMap size: 5, entities: [['4' => 'value 4'], ['5' => 'value 5'], ['1' => 'other value 1'], ['3' => 'value 3'], ['2' => 'value 2']]
+keys: [2 4 5 1 3]
+=== using  Remove()
+map keys: [5 2 3 1]
+>>> ConcurrentMap size: 4, entities: [['1' => 'other value 1'], ['3' => 'value 3'], ['2' => 'value 2'], ['5' => 'value 5']]
+=== using  RemoveIfExists()
++ key: 5, value: 'value 5', removed: true
+map keys: [3 1 2]
+- key: 5, value: '', removed: false
+map keys: [1 3 2]
+>>> ConcurrentMap size: 3, entities: [['3' => 'value 3'], ['2' => 'value 2'], ['1' => 'other value 1']]
+=== using  ForEachRead()
+sum of keys: 6, all values: "'value 2','value 3','other value 1'"
+=== using  Clear()
+= before clearing
+>>> ConcurrentMap size: 3, entities: [['3' => 'value 3'], ['1' => 'other value 1'], ['2' => 'value 2']]
+map keys: [1 3 2]
+~~~ is map empty? - false
+= after clearing
+>>> ConcurrentMap size: 0, entities: []
+map keys: []
+~~~ is map empty? - true
+=== using  TrimToSize()
+* filling map, amount: 1000000, threads: 3
+>>> the map was filled, duration: 722.777042ms, amount: 1000000, threads: 3, each thread added: [0 0 1000000]
+>>> map size: 1000000
+>>> map size: 1000000, memory usage: 72308 Kb
+* remove values from map, from 6 to 1000000 , threads: 3
+>>> values were removed, duration: 839.470333ms, map size: 5, threads: 3, each thread removed: [361197 342493 296305]
+after removing memory usage: 56684 Kb, map size: 5
+map keys: [3 1 4 2 5]
+after TrimToSize() memory usage: 108 Kb, map size: 5
+map keys: [4 2 5 3 1]
+>>> ConcurrentMap size: 5, entities: [['1' => 'value 1'], ['4' => 'value 4'], ['2' => 'value 2'], ['5' => 'value 5'], ['3' => 'value 3']]
+
+```
 ## ConcurrentSet
 
 `ConcurrentSet` is a thread safe set.
