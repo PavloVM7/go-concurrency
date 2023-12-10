@@ -2,12 +2,66 @@ package collections
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"reflect"
+	"runtime"
 	"slices"
 	"sync"
 	"testing"
 	"time"
 )
+
+func TestConcurrentSet_TrimToSize(t *testing.T) {
+	const amount = 1_000_000
+	const rest = 20
+	set := NewConcurrentSetCapacity[string](amount)
+	value := func(i int) string {
+		return fmt.Sprintf("set-value-%d", i)
+	}
+	for i := 1; i <= amount; i++ {
+		set.Add(value(i))
+	}
+	assert.Equal(t, amount, set.Size())
+	var m1 runtime.MemStats
+	runtime.ReadMemStats(&m1)
+
+	for i := rest + 1; i <= amount; i++ {
+		set.Remove(value(i))
+	}
+	assert.Equal(t, rest, set.Size())
+
+	var m2 runtime.MemStats
+	runtime.ReadMemStats(&m2)
+
+	runtime.GC()
+
+	var m3 runtime.MemStats
+	runtime.ReadMemStats(&m3)
+
+	set.TrimToSize()
+
+	var m4 runtime.MemStats
+	runtime.ReadMemStats(&m4)
+
+	runtime.GC()
+
+	var m5 runtime.MemStats
+	runtime.ReadMemStats(&m5)
+
+	memToString := func(ms *runtime.MemStats) string {
+		return fmt.Sprintf("%d Kb", ms.Alloc/1024)
+	}
+
+	t.Logf("Memory after fill: %s; after remove: %s (GC: %s); after trim: %s (GC: %s)",
+		memToString(&m1), memToString(&m2), memToString(&m3), memToString(&m4), memToString(&m5))
+
+	assert.Equal(t, rest, set.Size())
+	for i := 1; i <= rest; i++ {
+		val := value(i)
+		actual := set.Contains(val)
+		assert.True(t, actual)
+	}
+}
 
 func TestConcurrentSet_ForeEach(t *testing.T) {
 	set := NewConcurrentSetWithValues[int](1, 2, 3)
@@ -32,6 +86,22 @@ func TestConcurrentSet_ToSlice(t *testing.T) {
 	if !reflect.DeepEqual(tests, actual) {
 		t.Fatalf("incorrect slice: '%v', expected: '%v'", actual, tests)
 	}
+}
+
+func TestConcurrentSet_Remove(t *testing.T) {
+	set := NewConcurrentSetWithValues[int](1, 2, 3)
+	assert.False(t, set.Remove(111))
+	assert.Equal(t, 3, set.Size())
+	assert.True(t, set.Remove(3))
+	assert.Equal(t, 2, set.Size())
+	assert.True(t, set.Remove(1))
+	assert.Equal(t, 1, set.Size())
+	assert.True(t, set.Remove(2))
+	assert.True(t, set.IsEmpty())
+	assert.False(t, set.Remove(1))
+	assert.False(t, set.Remove(2))
+	assert.False(t, set.Remove(3))
+	assert.Equal(t, 0, set.Size())
 }
 
 func TestConcurrentSet_Contains(t *testing.T) {

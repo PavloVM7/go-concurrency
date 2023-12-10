@@ -55,6 +55,18 @@ func (cset *ConcurrentSet[T]) Add(value T) bool {
 	return false
 }
 
+// Remove removes a value from the set.
+// Returns true if this ConcurrentSet changed as result of the call.
+func (cset *ConcurrentSet[T]) Remove(value T) bool {
+	cset.mu.Lock()
+	defer cset.mu.Unlock()
+	if _, ok := cset.mp[value]; ok {
+		delete(cset.mp, value)
+		return true
+	}
+	return false
+}
+
 // Contains returns true if the set contains the value
 func (cset *ConcurrentSet[T]) Contains(value T) bool {
 	cset.mu.RLock()
@@ -63,7 +75,19 @@ func (cset *ConcurrentSet[T]) Contains(value T) bool {
 	return res
 }
 
-// Clear clears the set
+// TrimToSize trims the capacity of this ConcurrentSet instance to be the set's current size.
+// An application can use this operation to minimize the storage of a ConcurrentSet instance.
+func (cset *ConcurrentSet[T]) TrimToSize() {
+	cset.mu.Lock()
+	tmp := make(map[T]struct{}, len(cset.mp))
+	for k, v := range cset.mp {
+		tmp[k] = v
+	}
+	cset.mp = tmp
+	cset.mu.Unlock()
+}
+
+// Clear clears the set.
 func (cset *ConcurrentSet[T]) Clear() {
 	cset.mu.Lock()
 	if cset.capacity > 0 {
@@ -74,7 +98,7 @@ func (cset *ConcurrentSet[T]) Clear() {
 	cset.mu.Unlock()
 }
 
-// Size returns the current size of the ConcurrentSet
+// Size returns the current size of the ConcurrentSet.
 func (cset *ConcurrentSet[T]) Size() int {
 	cset.mu.RLock()
 	defer cset.mu.RUnlock()
