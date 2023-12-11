@@ -14,11 +14,17 @@ func (li *listItem[T]) insert(item *listItem[T]) {
 	item.prev = li.prev
 	item.next = li
 	li.prev = item
+	if item.prev != nil {
+		item.prev.next = item
+	}
 }
 func (li *listItem[T]) append(item *listItem[T]) {
 	item.prev = li
 	item.next = li.next
 	li.next = item
+	if item.next != nil {
+		item.next.prev = item
+	}
 }
 func (li *listItem[T]) removeYourself() {
 	if li.prev != nil {
