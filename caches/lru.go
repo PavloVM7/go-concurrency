@@ -72,6 +72,12 @@ func (lru *LRU[K, V]) Evict(key K) (bool, V) {
 	lru.mu.Unlock()
 	return ok, res
 }
+func (lru *LRU[K, V]) Clear() {
+	lru.mu.Lock()
+	lru.mp = make(map[K]*lruEntity[K, V], lru.limit)
+	lru.entities = &entityList[K, V]{}
+	lru.mu.Unlock()
+}
 func (lru *LRU[K, V]) Size() int {
 	lru.mu.RLock()
 	defer lru.mu.RUnlock()
