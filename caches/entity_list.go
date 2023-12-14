@@ -34,3 +34,7 @@ func (el *entityList[K, V]) removeEntity(entity *lruEntity[K, V]) {
 		el.tail = entity.prev
 	}
 }
+func (el *entityList[K, V]) clear() {
+	el.head = nil
+	el.tail = nil
+}
