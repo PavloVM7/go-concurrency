@@ -5,9 +5,13 @@
 // Package caches contains some thread safe collections.
 package caches
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 // LRU (least recently used) is a cache that deletes the least-recently-used items.
+// The LRU is safe for concurrent use by multiple goroutines.
 // - K - comparable key type
 // - V - value type
 type LRU[K comparable, V any] struct {
@@ -119,6 +123,15 @@ func (lru *LRU[K, V]) Size() int {
 	lru.mu.RLock()
 	defer lru.mu.RUnlock()
 	return len(lru.mp)
+}
+
+// String prints the LRU cache limit value and the number of key-value mappings in this cache
+func (lru *LRU[K, V]) String() string {
+	lru.mu.RLock()
+	lmt := lru.limit
+	sz := len(lru.mp)
+	lru.mu.RUnlock()
+	return fmt.Sprintf("LRU{limit: %d; size: %d}", lmt, sz)
 }
 
 // NewLRU creates and returns a new LRU cache.
