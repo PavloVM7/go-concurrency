@@ -1,7 +1,6 @@
 package caches
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -18,7 +17,7 @@ func BenchmarkLRU_PutIfNotExists(b *testing.B) {
 		b.StopTimer()
 		lru.Clear()
 		b.StartTimer()
-		ok, val = lru.PutIfNotExists(1, "value")
+		ok, val = lru.PutIfAbsent(1, "value")
 	}
 	b.StopTimer()
 	assert.True(b, ok)
@@ -37,11 +36,4 @@ func BenchmarkLRU_Put(b *testing.B) {
 	}
 	b.StopTimer()
 	assert.Equal(b, 1, lru.Size())
-}
-func createTestValues(count int) []string {
-	result := make([]string, 0, count)
-	for i := 0; i < count; i++ {
-		result = append(result, fmt.Sprintf("value%d", i))
-	}
-	return result
 }

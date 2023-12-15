@@ -47,7 +47,7 @@ func TestLRU_Get_evicted(t *testing.T) {
 	lru := createTestLru()
 
 	for i := 0; i < len(keys); i++ {
-		lru.PutIfNotExists(keys[i], values[i])
+		lru.PutIfAbsent(keys[i], values[i])
 	}
 
 	assert.Equal(t, testLruLimit, lru.Size())
@@ -95,9 +95,9 @@ func TestLRU_PutIfNotExists_evict(t *testing.T) {
 	value2 := "value2"
 	value3 := "value3"
 
-	lru.PutIfNotExists(1, value1)
-	lru.PutIfNotExists(2, value2)
-	lru.PutIfNotExists(3, value3)
+	lru.PutIfAbsent(1, value1)
+	lru.PutIfAbsent(2, value2)
+	lru.PutIfAbsent(3, value3)
 
 	assert.Equal(t, value3, lru.entities.head.value)
 	assert.Equal(t, value1, lru.entities.tail.value)
@@ -105,7 +105,7 @@ func TestLRU_PutIfNotExists_evict(t *testing.T) {
 	assert.Equal(t, testLruLimit, lru.Size())
 
 	value4 := "value4"
-	lru.PutIfNotExists(4, value4)
+	lru.PutIfAbsent(4, value4)
 
 	assert.Equal(t, value4, lru.entities.head.value)
 	assert.Equal(t, value2, lru.entities.tail.value)
@@ -115,17 +115,17 @@ func TestLRU_PutIfNotExists_evict(t *testing.T) {
 func TestLRU_PutIfNotExists_no_override(t *testing.T) {
 	lru := createTestLru()
 	value1 := "value1"
-	lru.PutIfNotExists(1, value1)
+	lru.PutIfAbsent(1, value1)
 	value2 := "value2"
-	lru.PutIfNotExists(2, value2)
+	lru.PutIfAbsent(2, value2)
 	value3 := "value3"
-	lru.PutIfNotExists(3, value3)
+	lru.PutIfAbsent(3, value3)
 	assert.Equal(t, value3, lru.entities.head.value)
 	assert.Equal(t, value1, lru.entities.tail.value)
 
 	assert.Equal(t, testLruLimit, lru.Size())
 
-	ok, val := lru.PutIfNotExists(1, "other value for key 1")
+	ok, val := lru.PutIfAbsent(1, "other value for key 1")
 
 	assert.False(t, ok)
 	assert.Equal(t, value1, val)
@@ -137,19 +137,19 @@ func TestLRU_PutIfNotExists_no_override(t *testing.T) {
 func TestLRU_PutIfNotExists(t *testing.T) {
 	lru := createTestLru()
 	value1 := "value1"
-	ok, val := lru.PutIfNotExists(1, value1)
+	ok, val := lru.PutIfAbsent(1, value1)
 	assert.True(t, ok)
 	assert.Equal(t, value1, val)
 	assert.Equal(t, value1, lru.entities.head.value)
 	assert.Equal(t, value1, lru.entities.tail.value)
 	value2 := "value2"
-	ok, val = lru.PutIfNotExists(2, value2)
+	ok, val = lru.PutIfAbsent(2, value2)
 	assert.True(t, ok)
 	assert.Equal(t, value2, val)
 	assert.Equal(t, value2, lru.entities.head.value)
 	assert.Equal(t, value1, lru.entities.tail.value)
 	value3 := "value3"
-	ok, val = lru.PutIfNotExists(3, value3)
+	ok, val = lru.PutIfAbsent(3, value3)
 	assert.Equal(t, value3, lru.entities.head.value)
 	assert.Equal(t, value1, lru.entities.tail.value)
 

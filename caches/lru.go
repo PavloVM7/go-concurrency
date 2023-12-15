@@ -40,12 +40,12 @@ func (lru *LRU[K, V]) putEntity(entity *lruEntity[K, V]) {
 	}
 }
 
-// PutIfNotExists maps the specified key to the specified value
+// PutIfAbsent maps the specified key to the specified value
 // if the key doesn't exist returns true and a new value.
 // If the key exists, the new value will not be mapped to it, the method returns false and the previous key value.
 //   - key - the key with which a specified value is to be assigned
 //   - value - the value to be associated with the specified key
-func (lru *LRU[K, V]) PutIfNotExists(key K, value V) (bool, V) {
+func (lru *LRU[K, V]) PutIfAbsent(key K, value V) (bool, V) {
 	lru.mu.Lock()
 	entity, ok := lru.mp[key]
 	if !ok {
