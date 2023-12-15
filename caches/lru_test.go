@@ -7,6 +7,21 @@ import (
 
 const testLruLimit = 3
 
+func TestLRU_Copy(t *testing.T) {
+	keys := []int{1, 2, 3}
+	values := []string{"value1", "value2", "value3"}
+	lru := createTestLru()
+	for i := 0; i < len(keys); i++ {
+		lru.Put(keys[i], values[i])
+	}
+	cpy := lru.Copy()
+	for i := 0; i < len(keys); i++ {
+		val, ok := cpy[keys[i]]
+		assert.True(t, ok)
+		assert.Equal(t, values[i], val)
+	}
+}
+
 func TestLRU_Evict(t *testing.T) {
 	keys := []int{1, 2, 3}
 	values := []string{"value1", "value2", "value3"}

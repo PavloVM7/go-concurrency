@@ -93,6 +93,17 @@ func (lru *LRU[K, V]) Evict(key K) (bool, V) {
 	return ok, res
 }
 
+// Copy returns a shallow copy of this LRU cache instance: the keys and the values themselves are not copies.
+func (lru *LRU[K, V]) Copy() map[K]V {
+	lru.mu.RLock()
+	result := make(map[K]V, len(lru.mp))
+	for k, e := range lru.mp {
+		result[k] = e.value
+	}
+	lru.mu.RUnlock()
+	return result
+}
+
 // Clear clears the cache.
 //
 //revive:disable:confusing-naming
