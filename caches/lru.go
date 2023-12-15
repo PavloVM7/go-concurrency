@@ -94,12 +94,14 @@ func (lru *LRU[K, V]) Evict(key K) (bool, V) {
 }
 
 // Clear clears the cache.
+//
+//revive:disable:confusing-naming
 func (lru *LRU[K, V]) Clear() {
 	lru.mu.Lock()
 	lru.mp = make(map[K]*lruEntity[K, V], lru.limit)
 	lru.entities.clear()
 	lru.mu.Unlock()
-}
+} //revive:enable:confusing-naming
 
 // Size returns the number of key-value mappings in this cache.
 func (lru *LRU[K, V]) Size() int {

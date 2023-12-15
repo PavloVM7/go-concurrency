@@ -20,13 +20,15 @@ type ConcurrentSet[T comparable] struct {
 //
 // It should not be used to modify values if the value type (T) is a reference type,
 // because a read lock is used under the hood.
+//
+//revive:disable:confusing-naming
 func (cset *ConcurrentSet[T]) ForEach(f func(value T)) {
 	cset.mu.RLock()
 	for k := range cset.mp {
 		f(k)
 	}
 	cset.mu.RUnlock()
-}
+} //revive:enable:confusing-naming
 
 // AddAll adds all the specified values to the ConcurrentSet.
 // Returns true if this ConcurrentSet changed as result of the call.
@@ -57,6 +59,8 @@ func (cset *ConcurrentSet[T]) Add(value T) bool {
 
 // Remove removes a value from the set.
 // Returns true if this ConcurrentSet changed as result of the call.
+//
+//revive:disable:confusing-naming
 func (cset *ConcurrentSet[T]) Remove(value T) bool {
 	cset.mu.Lock()
 	defer cset.mu.Unlock()
@@ -65,7 +69,7 @@ func (cset *ConcurrentSet[T]) Remove(value T) bool {
 		return true
 	}
 	return false
-}
+} //revive:enable:confusing-naming
 
 // Contains returns true if the set contains the value
 func (cset *ConcurrentSet[T]) Contains(value T) bool {

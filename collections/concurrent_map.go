@@ -102,11 +102,13 @@ func (cmap *ConcurrentMap[K, V]) RemoveIfExists(key K) (bool, V) {
 
 // Remove removes the key and its corresponding value from the ConcurrentMap.
 //   - key - the key that needs to be removed
+//
+//revive:disable:confusing-naming
 func (cmap *ConcurrentMap[K, V]) Remove(key K) {
 	cmap.mu.Lock()
 	delete(cmap.mp, key)
 	cmap.mu.Unlock()
-}
+} //revive:enable:confusing-naming
 
 // Put maps the specified key (key) to the specified value (value).
 // The value can be retrieved by calling the Get method with a key that is equal to the original key.
@@ -123,12 +125,14 @@ func (cmap *ConcurrentMap[K, V]) Put(key K, value V) {
 //
 // If a value for the key exists, its value is returned and true,
 // otherwise the default value for the value type is returned and false.
+//
+//revive:disable:confusing-naming
 func (cmap *ConcurrentMap[K, V]) Get(key K) (V, bool) {
 	cmap.mu.RLock()
 	val, ok := cmap.mp[key]
 	cmap.mu.RUnlock()
 	return val, ok
-}
+} //revive:enable:confusing-naming
 
 // Keys returns a slice of the keys contained in this map
 func (cmap *ConcurrentMap[K, V]) Keys() []K {
@@ -172,6 +176,8 @@ func (cmap *ConcurrentMap[K, V]) Copy() map[K]V {
 
 // TrimToSize trims the capacity of this ConcurrentMap instance to be the map's current size.
 // An application can use this operation to minimize the storage of a ConcurrentMap instance.
+//
+//revive:disable:confusing-naming
 func (cmap *ConcurrentMap[K, V]) TrimToSize() {
 	cmap.mu.Lock()
 	tmp := make(map[K]V, len(cmap.mp))
@@ -180,7 +186,7 @@ func (cmap *ConcurrentMap[K, V]) TrimToSize() {
 	}
 	cmap.mp = tmp
 	cmap.mu.Unlock()
-}
+} //revive:enable:confusing-naming
 
 // Clear clears the map
 //
